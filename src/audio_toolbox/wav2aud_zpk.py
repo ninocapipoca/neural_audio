@@ -90,7 +90,9 @@ def wav2aud(x: np.ndarray,
        Transactions on Speech and Audio Processing*, 2(3), 421-435.
        https://doi.org/10.1109/89.294356
     """
-    
+    # TODO - personalize cochba_file such that the user can load in a dictionary
+    # containing their own 3 numpy arrays (NUMPY ARRAYS NOT FILES!!!)
+    # TODO - add documentation for this
     if not cochba_file:
         # if none specified, set to provided filters
         cochba_file = Path(__file__).parent / 'utils' / 'cochba_filters.npz'
