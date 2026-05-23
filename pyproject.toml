@@ -14,7 +14,7 @@ where = ["src"]
  
 [project]
 
-name = "audio_toolbox"
+name = "neural_audio"
 
 version = "0.0.1"
 
@@ -46,6 +46,7 @@ classifiers = [
 dependencies = [
 
     "numpy >= 2.4.0",
+    "scipy>=1.16.3"
 
 ]
  
@@ -66,9 +67,14 @@ docs = [
 ]
 
 tutorials = [
+    "jupyter",
+    "matplotlib >= 3.10.8",
+    "ipywidgets",
+    "soundfile",
+]
 
-  "jupyter",
-  "matplotlib >= 3.10.8"
+tests = [
+    "parameterized",
 ]
 
 [project.urls]

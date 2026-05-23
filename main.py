@@ -1,1 +1,1 @@
-from src import audio_toolbox
+from src import neural_audio

@@ -4,7 +4,7 @@ import sys
 from pathlib import Path
 import numpy as np
 import soundfile as soundf
-from audio_toolbox.wav2aud_zpk import wav2aud
+from neural_audio.wav2aud_zpk import wav2aud
 
 test_dir = Path(__file__).parent # unit_tests folder
 

@@ -1,0 +1,291 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>neural_audio package &mdash; neural_audio 0.0.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=d45e8c67"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="neural_audio.utils package" href="neural_audio.utils.html" />
+    <link rel="prev" title="neural_audio" href="modules.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            neural_audio
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">neural_audio</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">neural_audio package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#subpackages">Subpackages</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="neural_audio.utils.html">neural_audio.utils package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-neural_audio.aud2cor">neural_audio.aud2cor</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#neural_audio.aud2cor.aud2cor"><code class="docutils literal notranslate"><span class="pre">aud2cor()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#neural_audio.aud2cor.corcplxw"><code class="docutils literal notranslate"><span class="pre">corcplxw()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#neural_audio.aud2cor.gen_corf"><code class="docutils literal notranslate"><span class="pre">gen_corf()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#neural_audio.aud2cor.gen_cort"><code class="docutils literal notranslate"><span class="pre">gen_cort()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#module-neural_audio.wav2aud_zpk">neural_audio.wav2aud_zpk</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#neural_audio.wav2aud_zpk.wav2aud"><code class="docutils literal notranslate"><span class="pre">wav2aud()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#module-neural_audio">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">neural_audio</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">neural_audio</a></li>
+      <li class="breadcrumb-item active">neural_audio package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/neural_audio.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="neural-audio-package">
+<h1>neural_audio package<a class="headerlink" href="#neural-audio-package" title="Link to this heading"></a></h1>
+<section id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Link to this heading"></a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="neural_audio.utils.html">neural_audio.utils package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="neural_audio.utils.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="neural_audio.utils.html#module-neural_audio.utils.mathfuncs">neural_audio.utils.mathfuncs module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="neural_audio.utils.html#neural_audio.utils.mathfuncs.sigmoid"><code class="docutils literal notranslate"><span class="pre">sigmoid()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="neural_audio.utils.html#module-neural_audio.utils">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-neural_audio.aud2cor">
+<span id="neural-audio-aud2cor"></span><h2>neural_audio.aud2cor<a class="headerlink" href="#module-neural_audio.aud2cor" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_audio.aud2cor.aud2cor">
+<span class="sig-prename descclassname"><span class="pre">neural_audio.aud2cor.</span></span><span class="sig-name descname"><span class="pre">aud2cor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">para1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rv</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sv</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">DISP</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neural_audio/aud2cor.html#aud2cor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_audio.aud2cor.aud2cor" title="Link to this definition"></a></dt>
+<dd><p>Cortical rate-scale representation (forward transform).</p>
+<section id="parameters">
+<h3>Parameters<a class="headerlink" href="#parameters" title="Link to this heading"></a></h3>
+<p>y     : ndarray (N, M)  — auditory spectrogram
+para1 : list/array      — [paras…, FULLT, FULLX, BP]
+rv    : array           — rate vector in Hz
+sv    : array           — scale vector in cyc/oct
+fname : str             — output filename (‘tmp…’ = no disk write)
+DISP  : float           — display saturation level (0 = no display)</p>
+</section>
+<section id="returns">
+<h3>Returns<a class="headerlink" href="#returns" title="Link to this heading"></a></h3>
+<p>cr : ndarray (K2, K1*2, N+2*dN, M+2*dM) — cortical representation</p>
+</section>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_audio.aud2cor.corcplxw">
+<span class="sig-prename descclassname"><span class="pre">neural_audio.aud2cor.</span></span><span class="sig-name descname"><span class="pre">corcplxw</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">z</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fout</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neural_audio/aud2cor.html#corcplxw"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_audio.aud2cor.corcplxw" title="Link to this definition"></a></dt>
+<dd><p>Write complex matrix to binary file.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_audio.aud2cor.gen_corf">
+<span class="sig-prename descclassname"><span class="pre">neural_audio.aud2cor.</span></span><span class="sig-name descname"><span class="pre">gen_corf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">M1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">SRF</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neural_audio/aud2cor.html#gen_corf"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_audio.aud2cor.gen_corf" title="Link to this definition"></a></dt>
+<dd><p>Generate spectral (scale) cortical filter in the frequency domain.
+fc     : characteristic scale (cyc/oct)
+M1     : half FFT length
+SRF    : spectral sampling rate (channels/oct)
+params : [filter_index, total_filters]</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_audio.aud2cor.gen_cort">
+<span class="sig-prename descclassname"><span class="pre">neural_audio.aud2cor.</span></span><span class="sig-name descname"><span class="pre">gen_cort</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">N1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">STF</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neural_audio/aud2cor.html#gen_cort"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_audio.aud2cor.gen_cort" title="Link to this definition"></a></dt>
+<dd><p>Generate temporal (rate) cortical filter in the frequency domain.
+fc     : characteristic rate (Hz)
+N1     : half FFT length
+STF    : sampling rate of the spectrogram (frames/sec)
+params : [filter_index, total_filters]  (used for bandwidth shaping)</p>
+</dd></dl>
+
+</section>
+<section id="module-neural_audio.wav2aud_zpk">
+<span id="neural-audio-wav2aud-zpk"></span><h2>neural_audio.wav2aud_zpk<a class="headerlink" href="#module-neural_audio.wav2aud_zpk" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_audio.wav2aud_zpk.wav2aud">
+<span class="sig-prename descclassname"><span class="pre">neural_audio.wav2aud_zpk.</span></span><span class="sig-name descname"><span class="pre">wav2aud</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frm_len</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_cst</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sig_fac</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">-2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shift</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cochba_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="_modules/neural_audio/wav2aud_zpk.html#wav2aud"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_audio.wav2aud_zpk.wav2aud" title="Link to this definition"></a></dt>
+<dd><p>Compute the auditory spectrogram of an acoustic waveform.</p>
+<p>Converts a raw waveform into an auditory spectrogram based on the modeling
+by Shamma et al and their NSL toobox code originally written in Matlab (see references).
+Relevant for the range of human hearing (20-20000Hz).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> (<em>numpy.ndarray</em>) – Input waveform as a 1-D array of audio samples.</p></li>
+<li><p><strong>frm_len</strong> (<em>int</em><em>, </em><em>optional</em>) – Frame length. Common values: 8, 16, or
+powers of two. Determines the temporal resolution of the output.</p></li>
+<li><p><strong>time_cst</strong> (<em>int</em><em>, </em><em>optional</em>) – Leaky integration time constant (e.g. 4,
+16, 64). Set to 0 to use short-term frame averaging instead.</p></li>
+<li><p><strong>sig_fac</strong> (<em>float</em><em>, </em><em>optional</em>) – Nonlinear compression factor for the hair cell sigmoid.
+The smaller the value, the greater the compression.
+- <cite>&gt; 0</cite> - transistor-like nonlinearity
+- <cite>0</cite> - full compression (step function)
+- <cite>-1</cite> - half-wave rectifier
+- other - linear function</p></li>
+<li><p><strong>shift</strong> (<em>int</em><em>, </em><em>optional</em>) – Octave shift relative to 16 kHz. Use <code class="docutils literal notranslate"><span class="pre">0</span></code> for 16 kHz,
+<code class="docutils literal notranslate"><span class="pre">-1</span></code> for 8 kHz, etc. Sampling frequency = <code class="docutils literal notranslate"><span class="pre">16000</span> <span class="pre">*</span> <span class="pre">2^[shft]</span></code></p></li>
+<li><p><strong>verbose</strong> (<em>bool</em><em>, </em><em>optional</em>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, logs per-channel progress at DEBUG level.</p></li>
+<li><p><strong>cochba_file</strong> (<em>path-like</em><em> or </em><em>None</em><em>, </em><em>optional</em>) – Path to a <code class="docutils literal notranslate"><span class="pre">.npz</span></code> file containing the
+cochlear filter bank (poles, zeros, and gains per channel). Defaults to
+the bundled <code class="docutils literal notranslate"><span class="pre">cochba_filters.npz</span></code>, the filters designed by Shamma et al
+based on their experimental work.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Auditory spectrogram of shape <code class="docutils literal notranslate"><span class="pre">(N,</span> <span class="pre">M-1)</span></code>, where <code class="docutils literal notranslate"><span class="pre">N</span></code> is the
+number of time frames and <code class="docutils literal notranslate"><span class="pre">M-1</span></code> is the number of frequency channels
+(ordered high-to-low frequency).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>numpy.ndarray</p>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The filter bank is applied from the highest to the lowest frequency
+channel. Lateral inhibition is computed by subtracting each channel’s
+response from the one above it, followed by half-wave rectification.</p>
+<p>Internal stage variables follow the theoretical work of Yang,
+Shamma, and Wang et al.:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">y1</span></code> — Spatiotemporal displacements along the basilar membrane</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">y2</span></code> — Transduction of <code class="docutils literal notranslate"><span class="pre">y1</span></code> into hair cell potentials (or
+instantaneous auditory nerve firing rate)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">y3</span></code> — Models lateral inhibitory interactions among LIN neurons</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">y4</span></code> — Half-wave rectified <code class="docutils literal notranslate"><span class="pre">y3</span></code>, modelling threshold
+nonlinearity in the LIN network</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">y5</span></code> — Final output of the LIN network</p></li>
+</ul>
+<p>LIN = lateral inhibitory network.</p>
+</div>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">duration</span> <span class="o">+</span> <span class="mi">1</span><span class="o">/</span><span class="mi">16000</span><span class="p">,</span> <span class="mi">1</span><span class="o">/</span><span class="mi">16000</span><span class="p">)</span>  
+<span class="n">wave</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">freq</span> <span class="o">*</span> <span class="n">t</span><span class="p">[:</span><span class="mi">32000</span><span class="p">])</span> <span class="c1"># pure sinusoid</span>
+<span class="n">v5</span> <span class="o">=</span> <span class="n">wav2aud</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<p class="rubric">References</p>
+<div class="line-block">
+<div class="line">Original Author: Powen Ru (<a class="reference external" href="mailto:powen&#37;&#52;&#48;isr&#46;umd&#46;edu">powen<span>&#64;</span>isr<span>&#46;</span>umd<span>&#46;</span>edu</a>), NSL, UMD</div>
+</div>
+<aside class="footnote-list brackets">
+<aside class="footnote brackets" id="id1" role="doc-footnote">
+<span class="label"><span class="fn-bracket">[</span>1<span class="fn-bracket">]</span></span>
+<p>Yang, X., Wang, K., and Shamma, S. A. (1992). “Auditory
+representations of acoustic signals.” <em>IEEE Transactions on
+Information Theory</em>, 38(2), 824-839.
+<a class="reference external" href="https://doi.org/10.1109/18.119739">https://doi.org/10.1109/18.119739</a></p>
+</aside>
+<aside class="footnote brackets" id="id2" role="doc-footnote">
+<span class="label"><span class="fn-bracket">[</span>2<span class="fn-bracket">]</span></span>
+<p>Wang, K., and Shamma, S. A. (1994). “Self-normalization and
+noise-robustness in early auditory representations.” <em>IEEE
+Transactions on Speech and Audio Processing</em>, 2(3), 421-435.
+<a class="reference external" href="https://doi.org/10.1109/89.294356">https://doi.org/10.1109/89.294356</a></p>
+</aside>
+</aside>
+</dd></dl>
+
+</section>
+<section id="module-neural_audio">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-neural_audio" title="Link to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="modules.html" class="btn btn-neutral float-left" title="neural_audio" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="neural_audio.utils.html" class="btn btn-neutral float-right" title="neural_audio.utils package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, CNM.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

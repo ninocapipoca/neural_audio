@@ -1,6 +1,6 @@
 import numpy as np
 from scipy import signal as sig
-from audio_toolbox.utils import mathfuncs as mf
+from neural_audio.utils import mathfuncs as mf
 from pathlib import Path
 import logging
 
