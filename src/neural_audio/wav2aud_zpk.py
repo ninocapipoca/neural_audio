@@ -12,7 +12,7 @@ def wav2aud(x: np.ndarray,
             sig_fac: float=-2, 
             shift: int=0, 
             verbose: bool=False, 
-            cochba_file=None, 
+            cochba_dict: dict=dict(),
             **kwargs) -> np.ndarray: 
     
     """Compute the auditory spectrogram of an acoustic waveform.
@@ -41,11 +41,12 @@ def wav2aud(x: np.ndarray,
     :type shift: int, optional
     :param verbose: If ``True``, logs per-channel progress at DEBUG level.
     :type verbose: bool, optional
-    :param cochba_file: Path to a ``.npz`` file containing the
-        cochlear filter bank (poles, zeros, and gains per channel). Defaults to
-        the bundled ``cochba_filters.npz``, the filters designed by Shamma et al
+    :param cochba_dict: A dictionary with keys 'zeros', 'poles', 'gain' where keys are the corresponding 
+        numpy arrays of length (num_channels). Used to supply non-default filters. Default is an empty
+        dictionary, which will load the bundled ``cochba_filters.npz``, the filters designed by Shamma et al
         based on their experimental work.
-    :type cochba_file: path-like or None, optional
+    :type cochba_dict: dict, optional
+
     :returns: Auditory spectrogram of shape ``(N, M-1)``, where ``N`` is the
         number of time frames and ``M-1`` is the number of frequency channels
         (ordered high-to-low frequency).
@@ -69,6 +70,31 @@ def wav2aud(x: np.ndarray,
 
         LIN = lateral inhibitory network.
 
+    .. note::
+        If you would like to use your own filters, you need to supply these as
+        three numpy arrays (not files!) in a dictionary with keys 'zeros', 'poles', 'gain'.
+        The arrays for zeros and poles should have dimensions (max_num_zeros, num_channels) or
+        (max_num_poles, num_channels) where num_channels is the number of filters and max_num_(poles/zeros)
+        is the maximum number of zeros a single filter has, to ensure these matrices are at least rectangular.
+        
+        For example, for a filterbank with 3 filters where the first one has 2 zeros, the second has 5 and the third
+        has 3, the value of 'zeros' in the dictionary should correspond to a (5x3) array. Any slots 
+        not filled by the zeros of a filter should have NaNs instead. An example matrix for this setup is below,
+        where ``a``'s, ``b``'s and ``c``'s correspond to the zeros of each filter. The same applies to the 'poles'
+        array. The 'gain' array should have length equal to the number of channels (here, 3), and only one dimension.
+
+        .. code-block:: none
+
+            [[a1,  b1, c1 ],
+             [a2,  b2, c2 ],
+             [NaN, b3, c3 ],
+             [NaN, b4, NaN],
+             [NaN, b5, NaN]]
+
+    .. warning::
+        - May produce unexpected results for frequencies outside the human hearing range.
+        - This function has only been tested using Shamma et al's filters, and using other filters may cause errors or unexpected behavior.
+
     Example::
 
         import numpy as np
@@ -90,16 +116,27 @@ def wav2aud(x: np.ndarray,
        Transactions on Speech and Audio Processing*, 2(3), 421-435.
        https://doi.org/10.1109/89.294356
     """
-    # TODO - personalize cochba_file such that the user can load in a dictionary
-    # containing their own 3 numpy arrays (NUMPY ARRAYS NOT FILES!!!)
-    # TODO - add documentation for this
-    if not cochba_file:
+
+    if len(cochba_dict) == 0:
         # if none specified, set to provided filters
         cochba_file = Path(__file__).parent / 'utils' / 'cochba_filters.npz'
+        COCHBA = np.load(cochba_file, allow_pickle=True)
+        M = int(COCHBA['len'])
 
-    COCHBA = np.load(cochba_file, allow_pickle=True)
-    M = int(COCHBA['len'])
+        z  = COCHBA[f'zeros_{M-1}']
+        po = COCHBA[f'poles_{M-1}']
+        k  = COCHBA[f'gain_{M-1}']
 
+    # otherwise, load in from dictionary
+    elif {'gain', 'poles', 'zeros'} == set(cochba_dict.keys()):
+        M = len(cochba_dict['gain']) # num channels
+        z = cochba_dict['zeros'][M-1]
+        po = cochba_dict['poles'][M-1]
+        k = cochba_dict['gain'][M-1]
+        
+    else:
+        raise ValueError('Filters incorrectly supplied. Check you are using the correct dictionary keys.')
+    
     L_x = len(x)
 
     L_frm = int(np.round(frm_len * 2**(4+shift)))     # frame length (samples)
@@ -119,9 +156,7 @@ def wav2aud(x: np.ndarray,
 
     # --- Highest-frequency channel (channel M-1) ---
     # Process separately: no lateral inhibition at the top of the filterbank.
-    z  = COCHBA[f'zeros_{M-1}']
-    po = COCHBA[f'poles_{M-1}']
-    k  = COCHBA[f'gain_{M-1}']
+    
 
     if verbose:
         logger.debug(f"processing channel {M-1}")
@@ -143,9 +178,14 @@ def wav2aud(x: np.ndarray,
         if verbose:
             logger.debug(f"processing channel {ch}")
 
-        z  = COCHBA[f'zeros_{ch}']
-        po = COCHBA[f'poles_{ch}']
-        k  = COCHBA[f'gain_{ch}']
+        if len(cochba_dict) == 0:
+            z  = COCHBA[f'zeros_{ch}']
+            po = COCHBA[f'poles_{ch}']
+            k  = COCHBA[f'gain_{ch}']
+        else:
+            z = cochba_dict['zeros'][ch]
+            po = cochba_dict['poles'][ch]
+            k = cochba_dict['gain'][ch]
 
         sos = sig.zpk2sos(z, po, k)
         y1  = sig.sosfilt(sos, x).squeeze()

@@ -51,18 +51,10 @@
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#submodules">Submodules</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#module-neural_audio.aud2cor">neural_audio.aud2cor</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#neural_audio.aud2cor.aud2cor"><code class="docutils literal notranslate"><span class="pre">aud2cor()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#neural_audio.aud2cor.corcplxw"><code class="docutils literal notranslate"><span class="pre">corcplxw()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#neural_audio.aud2cor.gen_corf"><code class="docutils literal notranslate"><span class="pre">gen_corf()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#neural_audio.aud2cor.gen_cort"><code class="docutils literal notranslate"><span class="pre">gen_cort()</span></code></a></li>
-</ul>
-</li>
 <li class="toctree-l3"><a class="reference internal" href="#module-neural_audio.wav2aud_zpk">neural_audio.wav2aud_zpk</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#neural_audio.wav2aud_zpk.wav2aud"><code class="docutils literal notranslate"><span class="pre">wav2aud()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="#module-neural_audio">Module contents</a></li>
 </ul>
 </li>
 </ul>
@@ -101,12 +93,10 @@
 <div class="toctree-wrapper compound">
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="neural_audio.utils.html">neural_audio.utils package</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="neural_audio.utils.html#submodules">Submodules</a></li>
 <li class="toctree-l2"><a class="reference internal" href="neural_audio.utils.html#module-neural_audio.utils.mathfuncs">neural_audio.utils.mathfuncs module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="neural_audio.utils.html#neural_audio.utils.mathfuncs.sigmoid"><code class="docutils literal notranslate"><span class="pre">sigmoid()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="neural_audio.utils.html#module-neural_audio.utils">Module contents</a></li>
 </ul>
 </li>
 </ul>
@@ -115,59 +105,11 @@
 <section id="submodules">
 <h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
 </section>
-<section id="module-neural_audio.aud2cor">
-<span id="neural-audio-aud2cor"></span><h2>neural_audio.aud2cor<a class="headerlink" href="#module-neural_audio.aud2cor" title="Link to this heading"></a></h2>
-<dl class="py function">
-<dt class="sig sig-object py" id="neural_audio.aud2cor.aud2cor">
-<span class="sig-prename descclassname"><span class="pre">neural_audio.aud2cor.</span></span><span class="sig-name descname"><span class="pre">aud2cor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">para1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rv</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sv</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">DISP</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neural_audio/aud2cor.html#aud2cor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_audio.aud2cor.aud2cor" title="Link to this definition"></a></dt>
-<dd><p>Cortical rate-scale representation (forward transform).</p>
-<section id="parameters">
-<h3>Parameters<a class="headerlink" href="#parameters" title="Link to this heading"></a></h3>
-<p>y     : ndarray (N, M)  — auditory spectrogram
-para1 : list/array      — [paras…, FULLT, FULLX, BP]
-rv    : array           — rate vector in Hz
-sv    : array           — scale vector in cyc/oct
-fname : str             — output filename (‘tmp…’ = no disk write)
-DISP  : float           — display saturation level (0 = no display)</p>
-</section>
-<section id="returns">
-<h3>Returns<a class="headerlink" href="#returns" title="Link to this heading"></a></h3>
-<p>cr : ndarray (K2, K1*2, N+2*dN, M+2*dM) — cortical representation</p>
-</section>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="neural_audio.aud2cor.corcplxw">
-<span class="sig-prename descclassname"><span class="pre">neural_audio.aud2cor.</span></span><span class="sig-name descname"><span class="pre">corcplxw</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">z</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fout</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neural_audio/aud2cor.html#corcplxw"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_audio.aud2cor.corcplxw" title="Link to this definition"></a></dt>
-<dd><p>Write complex matrix to binary file.</p>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="neural_audio.aud2cor.gen_corf">
-<span class="sig-prename descclassname"><span class="pre">neural_audio.aud2cor.</span></span><span class="sig-name descname"><span class="pre">gen_corf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">M1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">SRF</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neural_audio/aud2cor.html#gen_corf"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_audio.aud2cor.gen_corf" title="Link to this definition"></a></dt>
-<dd><p>Generate spectral (scale) cortical filter in the frequency domain.
-fc     : characteristic scale (cyc/oct)
-M1     : half FFT length
-SRF    : spectral sampling rate (channels/oct)
-params : [filter_index, total_filters]</p>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="neural_audio.aud2cor.gen_cort">
-<span class="sig-prename descclassname"><span class="pre">neural_audio.aud2cor.</span></span><span class="sig-name descname"><span class="pre">gen_cort</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">N1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">STF</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neural_audio/aud2cor.html#gen_cort"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_audio.aud2cor.gen_cort" title="Link to this definition"></a></dt>
-<dd><p>Generate temporal (rate) cortical filter in the frequency domain.
-fc     : characteristic rate (Hz)
-N1     : half FFT length
-STF    : sampling rate of the spectrogram (frames/sec)
-params : [filter_index, total_filters]  (used for bandwidth shaping)</p>
-</dd></dl>
-
-</section>
 <section id="module-neural_audio.wav2aud_zpk">
 <span id="neural-audio-wav2aud-zpk"></span><h2>neural_audio.wav2aud_zpk<a class="headerlink" href="#module-neural_audio.wav2aud_zpk" title="Link to this heading"></a></h2>
 <dl class="py function">
 <dt class="sig sig-object py" id="neural_audio.wav2aud_zpk.wav2aud">
-<span class="sig-prename descclassname"><span class="pre">neural_audio.wav2aud_zpk.</span></span><span class="sig-name descname"><span class="pre">wav2aud</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frm_len</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_cst</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sig_fac</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">-2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shift</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cochba_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="_modules/neural_audio/wav2aud_zpk.html#wav2aud"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_audio.wav2aud_zpk.wav2aud" title="Link to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">neural_audio.wav2aud_zpk.</span></span><span class="sig-name descname"><span class="pre">wav2aud</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frm_len</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_cst</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sig_fac</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">-2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shift</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cochba_dict</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="_modules/neural_audio/wav2aud_zpk.html#wav2aud"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_audio.wav2aud_zpk.wav2aud" title="Link to this definition"></a></dt>
 <dd><p>Compute the auditory spectrogram of an acoustic waveform.</p>
 <p>Converts a raw waveform into an auditory spectrogram based on the modeling
 by Shamma et al and their NSL toobox code originally written in Matlab (see references).
@@ -189,9 +131,9 @@ The smaller the value, the greater the compression.
 <li><p><strong>shift</strong> (<em>int</em><em>, </em><em>optional</em>) – Octave shift relative to 16 kHz. Use <code class="docutils literal notranslate"><span class="pre">0</span></code> for 16 kHz,
 <code class="docutils literal notranslate"><span class="pre">-1</span></code> for 8 kHz, etc. Sampling frequency = <code class="docutils literal notranslate"><span class="pre">16000</span> <span class="pre">*</span> <span class="pre">2^[shft]</span></code></p></li>
 <li><p><strong>verbose</strong> (<em>bool</em><em>, </em><em>optional</em>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, logs per-channel progress at DEBUG level.</p></li>
-<li><p><strong>cochba_file</strong> (<em>path-like</em><em> or </em><em>None</em><em>, </em><em>optional</em>) – Path to a <code class="docutils literal notranslate"><span class="pre">.npz</span></code> file containing the
-cochlear filter bank (poles, zeros, and gains per channel). Defaults to
-the bundled <code class="docutils literal notranslate"><span class="pre">cochba_filters.npz</span></code>, the filters designed by Shamma et al
+<li><p><strong>cochba_dict</strong> (<em>dict</em><em>, </em><em>optional</em>) – A dictionary with keys ‘zeros’, ‘poles’, ‘gain’ where keys are the corresponding 
+numpy arrays of length (num_channels). Used to supply non-default filters. Default is an empty
+dictionary, which will load the bundled <code class="docutils literal notranslate"><span class="pre">cochba_filters.npz</span></code>, the filters designed by Shamma et al
 based on their experimental work.</p></li>
 </ul>
 </dd>
@@ -222,6 +164,33 @@ nonlinearity in the LIN network</p></li>
 </ul>
 <p>LIN = lateral inhibitory network.</p>
 </div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>If you would like to use your own filters, you need to supply these as
+three numpy arrays (not files!) in a dictionary with keys ‘zeros’, ‘poles’, ‘gain’.
+The arrays for zeros and poles should have dimensions (max_num_zeros, num_channels) or
+(max_num_poles, num_channels) where num_channels is the number of filters and max_num_(poles/zeros)
+is the maximum number of zeros a single filter has, to ensure these matrices are at least rectangular.</p>
+<p>For example, for a filterbank with 3 filters where the first one has 2 zeros, the second has 5 and the third
+has 3, the value of ‘zeros’ in the dictionary should correspond to a (5x3) array. Any slots 
+not filled by the zeros of a filter should have NaNs instead. An example matrix for this setup is below,
+where <code class="docutils literal notranslate"><span class="pre">a</span></code>’s, <code class="docutils literal notranslate"><span class="pre">b</span></code>’s and <code class="docutils literal notranslate"><span class="pre">c</span></code>’s correspond to the zeros of each filter. The same applies to the ‘poles’
+array. The ‘gain’ array should have length equal to the number of channels (here, 3), and only one dimension.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>[[a1,  b1, c1 ],
+ [a2,  b2, c2 ],
+ [NaN, b3, c3 ],
+ [NaN, b4, NaN],
+ [NaN, b5, NaN]]
+</pre></div>
+</div>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<ul class="simple">
+<li><p>May produce unexpected results for frequencies outside the human hearing range.</p></li>
+<li><p>This function has only been tested using Shamma et al’s filters, and using other filters may cause errors or unexpected behavior.</p></li>
+</ul>
+</div>
 <p>Example:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">duration</span> <span class="o">+</span> <span class="mi">1</span><span class="o">/</span><span class="mi">16000</span><span class="p">,</span> <span class="mi">1</span><span class="o">/</span><span class="mi">16000</span><span class="p">)</span>  
@@ -251,9 +220,6 @@ Transactions on Speech and Audio Processing</em>, 2(3), 421-435.
 </aside>
 </dd></dl>
 
-</section>
-<section id="module-neural_audio">
-<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-neural_audio" title="Link to this heading"></a></h2>
 </section>
 </section>
 
