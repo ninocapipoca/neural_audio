@@ -1,0 +1,15 @@
+LICENSE
+README.md
+pyproject.toml
+setup.py
+src/neural_audio/__init__.py
+src/neural_audio/aud2cor.py
+src/neural_audio/wav2aud_zpk.py
+src/neural_audio.egg-info/PKG-INFO
+src/neural_audio.egg-info/SOURCES.txt
+src/neural_audio.egg-info/dependency_links.txt
+src/neural_audio.egg-info/requires.txt
+src/neural_audio.egg-info/top_level.txt
+src/neural_audio/utils/__init__.py
+src/neural_audio/utils/mathfuncs.py
+src/unit_tests/wav2aud_tests.py
