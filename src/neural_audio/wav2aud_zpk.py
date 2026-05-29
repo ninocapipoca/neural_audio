@@ -12,32 +12,40 @@ def wav2aud(x: np.ndarray,
             sig_fac: float=-2, 
             shift: int=0, 
             verbose: bool=False, 
-            cochba_dict: dict=dict(),
-            **kwargs) -> np.ndarray: 
+            cochba_dict: dict=dict()) -> np.ndarray: 
     
-    """Compute the auditory spectrogram of an acoustic waveform.
+    """This function computes the auditory spectrogram (audiogram) of an acoustic waveform. 
+    This is done by applying a sliding frame procedure over the given signal ``x`` and passing each frame 
+    through 129 IIR filters. The time-frames are contiguous and non-overlapping. 
+    The output spectrogram includes 128 channels because the difference in activations between two consecutive filters are saved. 
+    The overall range of frequencies spanned by the output channels is 184 to 7246Hz. 
 
     Converts a raw waveform into an auditory spectrogram based on the modeling
     by Shamma et al and their NSL toobox code originally written in Matlab (see references).
-    Relevant for the range of human hearing (20-20000Hz). 
+    Recommended maximum sampling frequency is 16kHz. Lower sampling
+    frequencies should be specified using the `shift` parameter.
 
     :param x: Input waveform as a 1-D array of audio samples.
     :type x: numpy.ndarray
-    :param frm_len: Frame length. Common values: 8, 16, or
-        powers of two. Determines the temporal resolution of the output.
+    :param frm_len: Duration in miliseconds of a single output timeframe.
+        Common values: 8, 16, or powers of two. Determines the temporal 
+        resolution of the output.
     :type frm_len: int, optional
     :param time_cst: Leaky integration time constant (e.g. 4,
-        16, 64). Set to 0 to use short-term frame averaging instead.
+        16, 64). Defines the memory window of the leaky integrator that smooths the final 
+        auditory spectrogram over time. Models how neural spikes are integrated over short temporal windows. 
+        Set to 0 to use short-term frame averaging instead.
     :type time_cst: int, optional
-    :param sig_fac: Nonlinear compression factor for the hair cell sigmoid.
-        The smaller the value, the greater the compression.
-        - `> 0` - transistor-like nonlinearity
-        - `0` - full compression (step function)
-        - `-1` - half-wave rectifier
-        - other - linear function
+    :param sig_fac: Non-linear activation function controlling the hair cell excitability.
+    Possible values:
+            - ``> 0``: results in the use of a transistor-like sigmoid of the form :math:`\frac{1}{1+e^{-x/sig_fac}}`, 
+            where larger values of sig_fac result in a flatter slope.
+            - ``0``: results in the use of a step function.
+            - ``-1``: results in a rectified linear function of the form :math:`max(0,x)`.
+            - other: identity function
     :type sig_fac: float, optional
     :param shift: Octave shift relative to 16 kHz. Use ``0`` for 16 kHz,
-        ``-1`` for 8 kHz, etc. Sampling frequency = ``16000 * 2^[shft]``
+        ``-1`` for 8 kHz, etc. Sampling frequency = ``16000 * 2^[shift]``
     :type shift: int, optional
     :param verbose: If ``True``, logs per-channel progress at DEBUG level.
     :type verbose: bool, optional
