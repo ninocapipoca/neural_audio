@@ -142,7 +142,7 @@ def wav2aud(x: np.ndarray,
 
     # If filters are specified, load them from the dictionary
     else:
-        assert len(filter) == 3 and {'gain', 'poles', 'zeros'} == set(filters.keys()), "The filters dictionary should have the following keys: 'gain', 'poles', and 'zeros'."
+        assert len(filters) == 3 and {'gain', 'poles', 'zeros'} == set(filters.keys()), "The filters dictionary should have the following keys: 'gain', 'poles', and 'zeros'."
         assert filters['zeros'].shape == filters['poles'].shape, "The 'zeros' and 'poles' arrays in the filters dictionary should have the same shape."
         assert filters['gain'].shape[0] == filters['zeros'].shape[1], "The length of the 'gain' array in the filters dictionary should be equal to the number of filters (i.e. the second dimension of the 'zeros' and 'poles' arrays)."
         
