@@ -70,11 +70,14 @@ tutorials = [
     "jupyter",
     "matplotlib >= 3.10.8",
     "ipywidgets",
-    "soundfile",
+    "soundfile"
 ]
 
 tests = [
     "parameterized",
+    "soundfile",
+    "unittest",
+    "pathlib"
 ]
 
 [project.urls]
