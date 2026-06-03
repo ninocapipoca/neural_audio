@@ -132,7 +132,7 @@ def wav2aud(x: np.ndarray,
     if len(filters) == 0 or filters == None:
 
         # If no filters are specified, load in default filters from file
-        cochba_file = Path(__file__).parent / 'utils' / 'cochba_filters.npz'
+        cochba_file = Path(__file__).parent / 'examples' / 'filters' / 'cochba_filters.npz'
         COCHBA = np.load(cochba_file, allow_pickle=True)
         M = int(COCHBA['len'])
 
