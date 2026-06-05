@@ -1,0 +1,354 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>neural_audio.wav2aud &mdash; neural_audio 0.0.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=d45e8c67"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            neural_audio
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../modules.html">neural_audio</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">neural_audio</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">neural_audio.wav2aud</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for neural_audio.wav2aud</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy</span><span class="w"> </span><span class="kn">import</span> <span class="n">signal</span> <span class="k">as</span> <span class="n">sig</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neural_audio.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">mathfuncs</span> <span class="k">as</span> <span class="n">mf</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Tuple</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<div class="viewcode-block" id="wav2aud">
+<a class="viewcode-back" href="../../neural_audio.html#neural_audio.wav2aud.wav2aud">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">wav2aud</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> 
+            <span class="n">octave_shift</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> 
+            <span class="n">frame_length</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> 
+            <span class="n">sigmoid_factor</span><span class="p">:</span> <span class="nb">float</span><span class="o">=-</span><span class="mi">2</span><span class="p">,</span> 
+            <span class="n">time_constant</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> 
+            <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> 
+            <span class="n">filters</span><span class="p">:</span> <span class="n">Dict</span><span class="o">=</span><span class="nb">dict</span><span class="p">())</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span> 
+<span class="w">    </span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;This function computes a biologically inspired spectrogram (also known as audiogram) of an acoustic waveform by simulating the </span>
+<span class="sd">    transduction mechanism of the ferret cochlea, following the NSL Matlab toolbox by Yang, Wang and Shamma (1992 and 1994).</span>
+<span class="sd">    </span>
+<span class="sd">    A section of the cochlea spanning 128 hair-cells with a frequency selectivity calibrated to the range 180-7040Hz (given </span>
+<span class="sd">    ``octave_shift=0``) are each simulated by</span>
+<span class="sd">    - convolving the signal with a corresponding cell-specific bandpass filter that is implemented as a second-order section infinite impulse response (IIR) function. The frames of the sliding-frame procedure are contiguous and non-overlapping.</span>
+<span class="sd">    - applying a non-linear activation function to the output of each filter, modeling the hair cell transduction. The nonlinearity can be a sigmoid, step function, rectified linear function, or identity function, depending on the value of ``sigmoid_factor``.</span>
+<span class="sd">    - applying a low-pass filter to the output of each nonlinearity, modeling the hair cell membrane potential. This step is skipped when ``sigmoid_factor`` is set to -2, which models a linear ionic channel mode without membrane potential dynamics.</span>
+<span class="sd">    - computing lateral inhibition between adjacent hair-cells by subtracting the output of each filter from the one above it, followed by half-wave rectification. Note, to compute lateral inhibition for the channel of highest frequency, an auxiliary hair-cell with higher frequency selectivtiy is used. This auxiliary hair-cell will not be represented with a separate channel in the output diagram.</span>
+<span class="sd">    - applying temporal integration (i.e. smoothing) to the output of the lateral inhibitory network, either by leaky integration (when ``time_constant`` is set to a positive value) or by single time-frame averaging (when ``time_constant`` is set to 0). </span>
+<span class="sd">    </span>
+<span class="sd">    :param x: The input waveform as a 1-D time-series of audio samples with a maximum sampling frequency of 16kHz. The use of lower </span>
+<span class="sd">        sampling rates is supported and has to be specified using the ``octave_shift`` parameter. Note, if the length of ``x`` is not</span>
+<span class="sd">        an integer multiple of ``frame_length``, then ``x`` will be pre-padded with zeros to round up the length to that next integer multiple.</span>
+<span class="sd">    :type x: numpy.ndarray</span>
+<span class="sd">    :param octave_shift: At a default sampling rate of 16kHz, the simulated hair-cells span a frequency range of 180-7040 Hz, corresponding </span>
+<span class="sd">        to the 64 muscial notes F#3-A8 whereby each note is covered by two hair-cells. These :math:`\approx 5.3` octaves will be shifted if the sampling rate </span>
+<span class="sd">        of ``x`` deviates from its default. In particular, choose sampling rate and ``octave_shift` in line with the identity</span>
+<span class="sd">        :math:`sampling_rate = 16K * 2^{octave_shift}`. For example, set ``octave_shift`` to :math:`-1` for an 8 kHz sampling rate.</span>
+<span class="sd">    :type octave_shift: int, optional, default=0</span>
+<span class="sd">    :param frame_length: The length (in milliseconds) of a single frame used when convolving ``x`` with the filters. This is equal to the time span </span>
+<span class="sd">        of a single output time-frame. Common values: 8, 16, or others powers of two. </span>
+<span class="sd">    :type frame_length: int, optional, default=4</span>
+<span class="sd">    :param sigmoid_factor: Controlls the non-linear activation function applied to the raw filter outputs.</span>
+<span class="sd">    Possible values:</span>
+<span class="sd">            - :math:`&gt; 0`: results in the use of a transistor-like sigmoid of the form :math:`\frac{1}{1+e^{-x/sigmoid_factor}}`, where larger values of ``sigmoid_factor`` result in a flatter slope.</span>
+<span class="sd">            - :math:`0`: results in the use of a step function centred at zero.</span>
+<span class="sd">            - :math:`-1`: results in a rectified linear function of the form :math:`max(0,x)`.</span>
+<span class="sd">            - other: results in an identity function.</span>
+<span class="sd">    :type sigmoid_factor: float, optional, default=-2</span>
+<span class="sd">    :param time_constant: The non-negative time constant (in milliseconds) used for the temporal integration applied to the output of the </span>
+<span class="sd">        lateral inhibition network. If ``time_constant`` :math:`&gt;0`, it results in leaky integration and larger values lead to stronger </span>
+<span class="sd">        temporal smoothing of the output. If it is set to :math:`0`, it results in simple averaging of the sub-samples within a single output time-frame. </span>
+<span class="sd">    :type time_constant: int, optional, default=0</span>
+<span class="sd">    :param verbose: If ``True``, prints summary of configuration, inferred sampling-rate and logs per-channel progress at the DEBUG console.</span>
+<span class="sd">    :type verbose: bool, optional, default=False</span>
+<span class="sd">    :param filters: If the method should use custom filters instead of the default ones, they can be specified with this dictionary. It is expected to have key:value pairs</span>
+<span class="sd">            - &#39;zeros&#39; : A numpy.ndarray for transfer function zeros with dimensions (maximum number of zeros, 129 filters), ordered by characteristic frequency in ascending fashion.</span>
+<span class="sd">            - &#39;poles&#39; : A numpy.ndarray for transfer function zeros with dimensions (maximum number of poles, 129 filters), ordered by characteristic frequency in ascending fashion.</span>
+<span class="sd">            - &#39;gain&#39; : A numpy.ndarray array of length equal to the number of filters, ordered by characteristic frequency in ascending fashion. </span>
+
+
+<span class="sd">        For example, for a filter-bank with 3 filters where the first one has 2 zeros, the second has 5 and the third</span>
+<span class="sd">        has 3, the value of &#39;zeros&#39; in the dictionary should correspond to a (5x3) array. Any slots </span>
+<span class="sd">        not filled by the zeros of a filter should have NaNs instead. An example matrix for this setup is shown below,</span>
+<span class="sd">        where ``a``&#39;s, ``b``&#39;s and ``c``&#39;s correspond to the zeros of each filter. The same applies to the &#39;poles&#39;</span>
+<span class="sd">        array. The &#39;gain&#39; array should have length equal to the number of channels (here, 3), and only one dimension.</span>
+
+<span class="sd">        .. code-block:: none</span>
+
+<span class="sd">            [[a1,  b1, c1 ],</span>
+<span class="sd">             [a2,  b2, c2 ],</span>
+<span class="sd">             [NaN, b3, c3 ],</span>
+<span class="sd">             [NaN, b4, NaN],</span>
+<span class="sd">             [NaN, b5, NaN]]</span>
+<span class="sd">             </span>
+<span class="sd">    :type filters: dict, optional</span>
+
+<span class="sd">    :returns: `frequencies` (numpy.ndarray) - The :math:`M=128` characteristic frequencies of the simulated hair-cells in Hz.</span>
+<span class="sd">    :returns: `time_points&#39; (numpy.ndarray) - The :math:`N=ceil(len(x) / frame_length)` time points corresponding to the center of each output frame in seconds.</span>
+<span class="sd">    :returns: `audiogram` (numpy.ndarray) - The auditory spectrogram of shape [:math:`[M,N]`], where :math:`M=128` is the number of frequency channels and :math:`N=ceil(len(x) / frame_length)` is the number of time-frames. </span>
+<span class="sd">    </span>
+<span class="sd">    Example::</span>
+
+<span class="sd">        import numpy as np</span>
+<span class="sd">        from neural_audio.wav2aud import wav2aud</span>
+
+<span class="sd">        note = 440 # A4 note in Hz</span>
+<span class="sd">        fs = 16000 # Sampling rate</span>
+<span class="sd">        t = np.arange(0, 1, 1/fs) # Input time points</span>
+<span class="sd">        waveform = np.sin(2 * np.pi * note * t)  # 1 second of audio </span>
+<span class="sd">        time_points, frequencies, audiogram  = wav2aud(waveform)</span>
+
+
+<span class="sd">    .. note:: This python implementation has been tested on pure sinusoids, object sounds, animal sounds and human speech to produce outputs that are equal to the original NSL toolbox Matlab implementation by Yang, Wang and Shamma (1992 and 1994) up to a numerical precision of 0.01 using the default filters. </span>
+
+<span class="sd">    .. warning:: This function has only been tested using the filters of Yang, Wang and Shamma. Providing sounds outside the supported frequency range or using custom filters may lead to unexpected results.</span>
+<span class="sd">        </span>
+<span class="sd">    .. rubric:: References</span>
+
+<span class="sd">    | Original Author: Powen Ru (powen@isr.umd.edu), NSL, UMD</span>
+
+<span class="sd">    .. [1] Yang, X., Wang, K., and Shamma, S. A. (1992). &quot;Auditory</span>
+<span class="sd">       representations of acoustic signals.&quot; *IEEE Transactions on</span>
+<span class="sd">       Information Theory*, 38(2), 824-839.</span>
+<span class="sd">       https://doi.org/10.1109/18.119739</span>
+
+<span class="sd">    .. [2] Wang, K., and Shamma, S. A. (1994). &quot;Self-normalization and</span>
+<span class="sd">       noise-robustness in early auditory representations.&quot; *IEEE</span>
+<span class="sd">       Transactions on Speech and Audio Processing*, 2(3), 421-435.</span>
+<span class="sd">       https://doi.org/10.1109/89.294356</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># --- Input validation ---</span>
+
+    <span class="c1"># Ensure x is properly formatted</span>
+    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="ow">and</span> <span class="n">x</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;Input waveform should be a 1-D numpy array.&quot;</span>
+
+    <span class="c1"># Ensure octave_shift is an integer</span>
+    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">octave_shift</span><span class="p">,</span> <span class="nb">int</span><span class="p">),</span> <span class="s2">&quot;The octave_shift parameter should be an integer.&quot;</span>
+
+    <span class="c1"># Ensure frame_length is a positive integer</span>
+    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">frame_length</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">and</span> <span class="n">frame_length</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;The frame_length parameter should be a positive integer.&quot;</span>
+
+    <span class="c1"># Ensure sigmoid_factor is a float or an integer</span>
+    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sigmoid_factor</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">)),</span> <span class="s2">&quot;The sigmoid_factor parameter should be a float or integer.&quot;</span>
+
+    <span class="c1"># Ensure time_constant is a non-negative integer</span>
+    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">time_constant</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">and</span> <span class="n">time_constant</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;The time_constant parameter should be a non-negative integer.&quot;</span>
+
+    <span class="c1"># Ensure verbose is a boolean</span>
+    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">verbose</span><span class="p">,</span> <span class="nb">bool</span><span class="p">),</span> <span class="s2">&quot;The verbose parameter should be a boolean.&quot;</span>
+
+    <span class="c1"># Ensure filters are in correct format</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">filters</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">filters</span> <span class="o">==</span> <span class="kc">None</span><span class="p">:</span>
+
+        <span class="c1"># If no filters are specified, load in default filters from file</span>
+        <span class="n">cochba_file</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">parent</span> <span class="o">/</span> <span class="s1">&#39;examples&#39;</span> <span class="o">/</span> <span class="s1">&#39;filters&#39;</span> <span class="o">/</span> <span class="s1">&#39;cochba_filters.npz&#39;</span>
+        <span class="n">COCHBA</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">cochba_file</span><span class="p">,</span> <span class="n">allow_pickle</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">M</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">COCHBA</span><span class="p">[</span><span class="s1">&#39;len&#39;</span><span class="p">])</span>
+
+        <span class="n">z</span>  <span class="o">=</span> <span class="n">COCHBA</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;zeros_</span><span class="si">{</span><span class="n">M</span><span class="o">-</span><span class="mi">1</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">]</span>
+        <span class="n">po</span> <span class="o">=</span> <span class="n">COCHBA</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;poles_</span><span class="si">{</span><span class="n">M</span><span class="o">-</span><span class="mi">1</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">]</span>
+        <span class="n">k</span>  <span class="o">=</span> <span class="n">COCHBA</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;gain_</span><span class="si">{</span><span class="n">M</span><span class="o">-</span><span class="mi">1</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">]</span>
+
+    <span class="c1"># If filters are specified, load them from the dictionary</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">filters</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span> <span class="ow">and</span> <span class="p">{</span><span class="s1">&#39;gain&#39;</span><span class="p">,</span> <span class="s1">&#39;poles&#39;</span><span class="p">,</span> <span class="s1">&#39;zeros&#39;</span><span class="p">}</span> <span class="o">==</span> <span class="nb">set</span><span class="p">(</span><span class="n">filters</span><span class="o">.</span><span class="n">keys</span><span class="p">()),</span> <span class="s2">&quot;The filters dictionary should have the following keys: &#39;gain&#39;, &#39;poles&#39;, and &#39;zeros&#39;.&quot;</span>
+        <span class="k">assert</span> <span class="n">filters</span><span class="p">[</span><span class="s1">&#39;zeros&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="n">filters</span><span class="p">[</span><span class="s1">&#39;poles&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="s2">&quot;The &#39;zeros&#39; and &#39;poles&#39; arrays in the filters dictionary should have the same shape.&quot;</span>
+        <span class="k">assert</span> <span class="n">filters</span><span class="p">[</span><span class="s1">&#39;gain&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">filters</span><span class="p">[</span><span class="s1">&#39;zeros&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="s2">&quot;The length of the &#39;gain&#39; array in the filters dictionary should be equal to the number of filters (i.e. the second dimension of the &#39;zeros&#39; and &#39;poles&#39; arrays).&quot;</span>
+        
+        <span class="n">M</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">filters</span><span class="p">[</span><span class="s1">&#39;gain&#39;</span><span class="p">])</span> <span class="c1"># Number of filters (one more than the output channels)</span>
+        <span class="n">z</span> <span class="o">=</span> <span class="n">filters</span><span class="p">[</span><span class="s1">&#39;zeros&#39;</span><span class="p">][</span><span class="n">M</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">po</span> <span class="o">=</span> <span class="n">filters</span><span class="p">[</span><span class="s1">&#39;poles&#39;</span><span class="p">][</span><span class="n">M</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">k</span> <span class="o">=</span> <span class="n">filters</span><span class="p">[</span><span class="s1">&#39;gain&#39;</span><span class="p">][</span><span class="n">M</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        
+
+    <span class="c1"># --- Define constants and allocate output ---</span>
+    <span class="c1"># Convenience parameters</span>
+    <span class="n">sampling_rate</span> <span class="o">=</span> <span class="mi">16000</span> <span class="o">*</span> <span class="mi">2</span><span class="o">**</span><span class="n">octave_shift</span>
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Converting waveform of length </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">/</span><span class="n">sampling_rate</span><span class="si">}</span><span class="s2">s samples to cochleagram with </span><span class="se">\n\t</span><span class="s2">-octave shift </span><span class="si">{</span><span class="n">octave_shift</span><span class="si">}</span><span class="s2">, </span><span class="se">\n\t</span><span class="s2">-frame length </span><span class="si">{</span><span class="n">frame_length</span><span class="si">}</span><span class="s2"> ms, </span><span class="se">\n\t</span><span class="s2">-sigmoid factor </span><span class="si">{</span><span class="n">sigmoid_factor</span><span class="si">}</span><span class="s2">, </span><span class="se">\n\t</span><span class="s2">-time constant </span><span class="si">{</span><span class="n">time_constant</span><span class="si">}</span><span class="s2"> ms, </span><span class="se">\n\t</span><span class="s2">-inferred sampling rate </span><span class="si">{</span><span class="n">sampling_rate</span><span class="si">}</span><span class="s2"> Hz.&quot;</span><span class="p">)</span>
+
+    <span class="n">L_x</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="n">L_frm</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">frame_length</span> <span class="o">*</span> <span class="mi">2</span><span class="o">**</span><span class="p">(</span><span class="mi">4</span><span class="o">+</span><span class="n">octave_shift</span><span class="p">)))</span>     <span class="c1"># frame length (samples)</span>
+
+    <span class="n">alph</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">if</span> <span class="n">time_constant</span><span class="p">:</span>
+        <span class="n">alph</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="n">time_constant</span> <span class="o">*</span> <span class="mi">2</span><span class="o">**</span><span class="p">(</span><span class="mi">4</span><span class="o">+</span><span class="n">octave_shift</span><span class="p">)))</span>  <span class="c1"># decay factor for leaky integration</span>
+
+    <span class="n">haircell_tc</span> <span class="o">=</span> <span class="mf">0.5</span>                                  <span class="c1"># hair cell time constant (ms)</span>
+    <span class="n">beta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="n">haircell_tc</span> <span class="o">*</span> <span class="mi">2</span><span class="o">**</span><span class="p">(</span><span class="mi">4</span><span class="o">+</span><span class="n">octave_shift</span><span class="p">)))</span>   <span class="c1"># hair cell membrane decay</span>
+
+    <span class="c1"># Allocate output: N frames x (M-1) channels</span>
+    <span class="n">N</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">L_x</span> <span class="o">/</span> <span class="n">L_frm</span><span class="p">))</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">pad</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">N</span> <span class="o">*</span> <span class="n">L_frm</span> <span class="o">-</span> <span class="n">L_x</span><span class="p">)))</span> <span class="c1"># zero-pad x to closest integer multiple of L_frm</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">audiogram</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">N</span><span class="p">,</span> <span class="n">M</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+
+
+    <span class="c1"># --- Highest-frequency channel (channel M-1) ---</span>
+    <span class="c1"># Process separately: no lateral inhibition at the top of the filterbank.</span>
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;processing channel </span><span class="si">{</span><span class="n">M</span><span class="o">-</span><span class="mi">1</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="n">sos</span> <span class="o">=</span> <span class="n">sig</span><span class="o">.</span><span class="n">zpk2sos</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">po</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span>
+    <span class="n">y1</span>  <span class="o">=</span> <span class="n">sig</span><span class="o">.</span><span class="n">sosfilt</span><span class="p">(</span><span class="n">sos</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">()</span> <span class="c1"># y1 Spatiotemporal displacements along the basilar membrane</span>
+    <span class="n">y2</span>  <span class="o">=</span> <span class="n">mf</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">(</span><span class="n">y1</span><span class="p">,</span> <span class="n">sigmoid_factor</span><span class="p">)</span> <span class="c1"># y2 Transduction of ``y1`` into hair cell potentials (or instantaneous auditory nerve firing rate)</span>
+
+    <span class="c1"># Hair cell membrane low-pass filter (cutoff &lt;= 4 kHz).</span>
+    <span class="c1"># Skipped when sigmoid_factor == -2 (linear ionic channel mode).</span>
+    <span class="k">if</span> <span class="n">sigmoid_factor</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">2</span><span class="p">:</span>
+        <span class="n">sos_y2</span> <span class="o">=</span> <span class="n">sig</span><span class="o">.</span><span class="n">tf2sos</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">1.</span><span class="p">]),</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="n">beta</span><span class="p">]))</span>
+        <span class="n">y2</span> <span class="o">=</span> <span class="n">sig</span><span class="o">.</span><span class="n">sosfilt</span><span class="p">(</span><span class="n">sos_y2</span><span class="p">,</span> <span class="n">y2</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">()</span>
+
+    <span class="n">y2_h</span> <span class="o">=</span> <span class="n">y2</span>  <span class="c1"># store as reference for lateral inhibition in next channel</span>
+
+
+    <span class="c1"># --- Remaining channels (high -&gt; low frequency) ---</span>
+    <span class="k">for</span> <span class="n">ch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">M</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;processing channel </span><span class="si">{</span><span class="n">ch</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">filters</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">z</span>  <span class="o">=</span> <span class="n">COCHBA</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;zeros_</span><span class="si">{</span><span class="n">ch</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">]</span>
+            <span class="n">po</span> <span class="o">=</span> <span class="n">COCHBA</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;poles_</span><span class="si">{</span><span class="n">ch</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">]</span>
+            <span class="n">k</span>  <span class="o">=</span> <span class="n">COCHBA</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;gain_</span><span class="si">{</span><span class="n">ch</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">z</span> <span class="o">=</span> <span class="n">filters</span><span class="p">[</span><span class="s1">&#39;zeros&#39;</span><span class="p">][</span><span class="n">ch</span><span class="p">]</span>
+            <span class="n">po</span> <span class="o">=</span> <span class="n">filters</span><span class="p">[</span><span class="s1">&#39;poles&#39;</span><span class="p">][</span><span class="n">ch</span><span class="p">]</span>
+            <span class="n">k</span> <span class="o">=</span> <span class="n">filters</span><span class="p">[</span><span class="s1">&#39;gain&#39;</span><span class="p">][</span><span class="n">ch</span><span class="p">]</span>
+
+        <span class="n">sos</span> <span class="o">=</span> <span class="n">sig</span><span class="o">.</span><span class="n">zpk2sos</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">po</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span>
+        <span class="n">y1</span>  <span class="o">=</span> <span class="n">sig</span><span class="o">.</span><span class="n">sosfilt</span><span class="p">(</span><span class="n">sos</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">()</span>
+
+        <span class="c1"># Transduction: hair cell nonlinearity</span>
+        <span class="n">y2</span> <span class="o">=</span> <span class="n">mf</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">(</span><span class="n">y1</span><span class="p">,</span> <span class="n">sigmoid_factor</span><span class="p">)</span>
+
+        <span class="c1"># Hair cell membrane low-pass filter (cutoff &lt;= 4 kHz).</span>
+        <span class="c1"># Skipped when sigmoid_factor == -2 (linear ionic channel mode).</span>
+        <span class="k">if</span> <span class="n">sigmoid_factor</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">2</span><span class="p">:</span>
+            <span class="n">sos_y2</span> <span class="o">=</span> <span class="n">sig</span><span class="o">.</span><span class="n">tf2sos</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">1.</span><span class="p">]),</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="n">beta</span><span class="p">]))</span>
+            <span class="n">y2</span> <span class="o">=</span> <span class="n">sig</span><span class="o">.</span><span class="n">sosfilt</span><span class="p">(</span><span class="n">sos_y2</span><span class="p">,</span> <span class="n">y2</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">()</span>
+
+        <span class="c1"># lateral inhibitory network</span>
+        <span class="n">y3</span>   <span class="o">=</span> <span class="n">y2</span> <span class="o">-</span> <span class="n">y2_h</span> <span class="c1"># y3 Models lateral inhibitory interactions among LIN neurons</span>
+        <span class="n">y2_h</span> <span class="o">=</span> <span class="n">y2</span>
+        <span class="n">y4</span>   <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">y3</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="c1"># y4 Half-wave rectified ``y3``, modelling threshold non-linearity in the llateral inhibition network</span>
+
+        <span class="c1"># Temporal integration</span>
+        <span class="k">if</span> <span class="n">alph</span><span class="p">:</span>
+            <span class="c1"># Leaky integration</span>
+            <span class="n">sos_y5</span> <span class="o">=</span> <span class="n">sig</span><span class="o">.</span><span class="n">tf2sos</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">1.</span><span class="p">]),</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="n">alph</span><span class="p">]))</span>
+            <span class="n">y5</span> <span class="o">=</span> <span class="n">sig</span><span class="o">.</span><span class="n">sosfilt</span><span class="p">(</span><span class="n">sos_y5</span><span class="p">,</span> <span class="n">y4</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">()</span>
+            <span class="n">audiogram</span><span class="p">[:,</span> <span class="n">ch</span><span class="p">]</span> <span class="o">=</span> <span class="n">sig</span><span class="o">.</span><span class="n">decimate</span><span class="p">(</span><span class="n">y5</span><span class="p">,</span> <span class="n">L_frm</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Short-term average over each frame</span>
+            <span class="k">if</span> <span class="n">L_frm</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">audiogram</span><span class="p">[:,</span> <span class="n">ch</span><span class="p">]</span> <span class="o">=</span> <span class="n">y4</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">audiogram</span><span class="p">[:,</span> <span class="n">ch</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">y4</span><span class="p">,</span> <span class="p">(</span><span class="n">N</span><span class="p">,</span> <span class="n">L_frm</span><span class="p">))</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="c1"># Compute frequencies</span>
+    <span class="n">frequencies</span> <span class="o">=</span> <span class="mi">440</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">**</span> <span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">M</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="mi">31</span><span class="p">)</span> <span class="o">/</span> <span class="mi">24</span> <span class="o">+</span> <span class="n">octave_shift</span><span class="p">)</span> <span class="c1"># in Hz, with 440Hz as reference frequency for the 49th channel (A4)</span>
+    <span class="c1">#frequencies = 1000 * 2 ** (np.linspace(-2.15,2.15,128)) * sampling_rate / 16000</span>
+    <span class="c1"># Time points for output frames</span>
+    <span class="n">time_points</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">N</span><span class="p">)</span> <span class="o">+</span> <span class="mf">0.5</span><span class="p">)</span> <span class="o">*</span> <span class="n">frame_length</span> <span class="o">/</span> <span class="mi">1000</span>  <span class="c1"># in seconds</span>
+
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Finished processing. </span><span class="se">\n\t</span><span class="s2">-Output audiogram shape: </span><span class="si">{</span><span class="n">audiogram</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">, </span><span class="se">\n\t</span><span class="s2">-time points shape: </span><span class="si">{</span><span class="n">time_points</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">, </span><span class="se">\n\t</span><span class="s2">-characteristic frequencies: </span><span class="si">{</span><span class="n">frequencies</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2"> - </span><span class="si">{</span><span class="n">frequencies</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">Hz.&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Outputs</span>
+    <span class="k">return</span> <span class="n">time_points</span><span class="p">,</span> <span class="n">frequencies</span><span class="p">,</span> <span class="n">audiogram</span><span class="o">.</span><span class="n">T</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, CNM.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
