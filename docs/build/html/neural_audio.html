@@ -51,10 +51,7 @@
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#submodules">Submodules</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#module-neural_audio.wav2aud_zpk">neural_audio.wav2aud_zpk</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#neural_audio.wav2aud_zpk.wav2aud"><code class="docutils literal notranslate"><span class="pre">wav2aud()</span></code></a></li>
-</ul>
-</li>
+<li class="toctree-l3"><a class="reference internal" href="#neural-audio-wav2aud-zpk">neural_audio.wav2aud_zpk</a></li>
 </ul>
 </li>
 </ul>
@@ -105,121 +102,8 @@
 <section id="submodules">
 <h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
 </section>
-<section id="module-neural_audio.wav2aud_zpk">
-<span id="neural-audio-wav2aud-zpk"></span><h2>neural_audio.wav2aud_zpk<a class="headerlink" href="#module-neural_audio.wav2aud_zpk" title="Link to this heading"></a></h2>
-<dl class="py function">
-<dt class="sig sig-object py" id="neural_audio.wav2aud_zpk.wav2aud">
-<span class="sig-prename descclassname"><span class="pre">neural_audio.wav2aud_zpk.</span></span><span class="sig-name descname"><span class="pre">wav2aud</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frm_len</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_cst</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sig_fac</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">-2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shift</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cochba_dict</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="_modules/neural_audio/wav2aud_zpk.html#wav2aud"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_audio.wav2aud_zpk.wav2aud" title="Link to this definition"></a></dt>
-<dd><p>Compute the auditory spectrogram of an acoustic waveform.</p>
-<p>Converts a raw waveform into an auditory spectrogram based on the modeling
-by Shamma et al and their NSL toobox code originally written in Matlab (see references).
-Relevant for the range of human hearing (20-20000Hz).</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>x</strong> (<em>numpy.ndarray</em>) – Input waveform as a 1-D array of audio samples.</p></li>
-<li><p><strong>frm_len</strong> (<em>int</em><em>, </em><em>optional</em>) – Frame length. Common values: 8, 16, or
-powers of two. Determines the temporal resolution of the output.</p></li>
-<li><p><strong>time_cst</strong> (<em>int</em><em>, </em><em>optional</em>) – Leaky integration time constant (e.g. 4,
-16, 64). Set to 0 to use short-term frame averaging instead.</p></li>
-<li><p><strong>sig_fac</strong> (<em>float</em><em>, </em><em>optional</em>) – Nonlinear compression factor for the hair cell sigmoid.
-The smaller the value, the greater the compression.
-- <cite>&gt; 0</cite> - transistor-like nonlinearity
-- <cite>0</cite> - full compression (step function)
-- <cite>-1</cite> - half-wave rectifier
-- other - linear function</p></li>
-<li><p><strong>shift</strong> (<em>int</em><em>, </em><em>optional</em>) – Octave shift relative to 16 kHz. Use <code class="docutils literal notranslate"><span class="pre">0</span></code> for 16 kHz,
-<code class="docutils literal notranslate"><span class="pre">-1</span></code> for 8 kHz, etc. Sampling frequency = <code class="docutils literal notranslate"><span class="pre">16000</span> <span class="pre">*</span> <span class="pre">2^[shft]</span></code></p></li>
-<li><p><strong>verbose</strong> (<em>bool</em><em>, </em><em>optional</em>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, logs per-channel progress at DEBUG level.</p></li>
-<li><p><strong>cochba_dict</strong> (<em>dict</em><em>, </em><em>optional</em>) – A dictionary with keys ‘zeros’, ‘poles’, ‘gain’ where keys are the corresponding 
-numpy arrays of length (num_channels). Used to supply non-default filters. Default is an empty
-dictionary, which will load the bundled <code class="docutils literal notranslate"><span class="pre">cochba_filters.npz</span></code>, the filters designed by Shamma et al
-based on their experimental work.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Auditory spectrogram of shape <code class="docutils literal notranslate"><span class="pre">(N,</span> <span class="pre">M-1)</span></code>, where <code class="docutils literal notranslate"><span class="pre">N</span></code> is the
-number of time frames and <code class="docutils literal notranslate"><span class="pre">M-1</span></code> is the number of frequency channels
-(ordered high-to-low frequency).</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>numpy.ndarray</p>
-</dd>
-</dl>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>The filter bank is applied from the highest to the lowest frequency
-channel. Lateral inhibition is computed by subtracting each channel’s
-response from the one above it, followed by half-wave rectification.</p>
-<p>Internal stage variables follow the theoretical work of Yang,
-Shamma, and Wang et al.:</p>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">y1</span></code> — Spatiotemporal displacements along the basilar membrane</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">y2</span></code> — Transduction of <code class="docutils literal notranslate"><span class="pre">y1</span></code> into hair cell potentials (or
-instantaneous auditory nerve firing rate)</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">y3</span></code> — Models lateral inhibitory interactions among LIN neurons</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">y4</span></code> — Half-wave rectified <code class="docutils literal notranslate"><span class="pre">y3</span></code>, modelling threshold
-nonlinearity in the LIN network</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">y5</span></code> — Final output of the LIN network</p></li>
-</ul>
-<p>LIN = lateral inhibitory network.</p>
-</div>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>If you would like to use your own filters, you need to supply these as
-three numpy arrays (not files!) in a dictionary with keys ‘zeros’, ‘poles’, ‘gain’.
-The arrays for zeros and poles should have dimensions (max_num_zeros, num_channels) or
-(max_num_poles, num_channels) where num_channels is the number of filters and max_num_(poles/zeros)
-is the maximum number of zeros a single filter has, to ensure these matrices are at least rectangular.</p>
-<p>For example, for a filterbank with 3 filters where the first one has 2 zeros, the second has 5 and the third
-has 3, the value of ‘zeros’ in the dictionary should correspond to a (5x3) array. Any slots 
-not filled by the zeros of a filter should have NaNs instead. An example matrix for this setup is below,
-where <code class="docutils literal notranslate"><span class="pre">a</span></code>’s, <code class="docutils literal notranslate"><span class="pre">b</span></code>’s and <code class="docutils literal notranslate"><span class="pre">c</span></code>’s correspond to the zeros of each filter. The same applies to the ‘poles’
-array. The ‘gain’ array should have length equal to the number of channels (here, 3), and only one dimension.</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>[[a1,  b1, c1 ],
- [a2,  b2, c2 ],
- [NaN, b3, c3 ],
- [NaN, b4, NaN],
- [NaN, b5, NaN]]
-</pre></div>
-</div>
-</div>
-<div class="admonition warning">
-<p class="admonition-title">Warning</p>
-<ul class="simple">
-<li><p>May produce unexpected results for frequencies outside the human hearing range.</p></li>
-<li><p>This function has only been tested using Shamma et al’s filters, and using other filters may cause errors or unexpected behavior.</p></li>
-</ul>
-</div>
-<p>Example:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
-<span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">duration</span> <span class="o">+</span> <span class="mi">1</span><span class="o">/</span><span class="mi">16000</span><span class="p">,</span> <span class="mi">1</span><span class="o">/</span><span class="mi">16000</span><span class="p">)</span>  
-<span class="n">wave</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">freq</span> <span class="o">*</span> <span class="n">t</span><span class="p">[:</span><span class="mi">32000</span><span class="p">])</span> <span class="c1"># pure sinusoid</span>
-<span class="n">v5</span> <span class="o">=</span> <span class="n">wav2aud</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-</pre></div>
-</div>
-<p class="rubric">References</p>
-<div class="line-block">
-<div class="line">Original Author: Powen Ru (<a class="reference external" href="mailto:powen&#37;&#52;&#48;isr&#46;umd&#46;edu">powen<span>&#64;</span>isr<span>&#46;</span>umd<span>&#46;</span>edu</a>), NSL, UMD</div>
-</div>
-<aside class="footnote-list brackets">
-<aside class="footnote brackets" id="id1" role="doc-footnote">
-<span class="label"><span class="fn-bracket">[</span>1<span class="fn-bracket">]</span></span>
-<p>Yang, X., Wang, K., and Shamma, S. A. (1992). “Auditory
-representations of acoustic signals.” <em>IEEE Transactions on
-Information Theory</em>, 38(2), 824-839.
-<a class="reference external" href="https://doi.org/10.1109/18.119739">https://doi.org/10.1109/18.119739</a></p>
-</aside>
-<aside class="footnote brackets" id="id2" role="doc-footnote">
-<span class="label"><span class="fn-bracket">[</span>2<span class="fn-bracket">]</span></span>
-<p>Wang, K., and Shamma, S. A. (1994). “Self-normalization and
-noise-robustness in early auditory representations.” <em>IEEE
-Transactions on Speech and Audio Processing</em>, 2(3), 421-435.
-<a class="reference external" href="https://doi.org/10.1109/89.294356">https://doi.org/10.1109/89.294356</a></p>
-</aside>
-</aside>
-</dd></dl>
-
+<section id="neural-audio-wav2aud-zpk">
+<h2>neural_audio.wav2aud_zpk<a class="headerlink" href="#neural-audio-wav2aud-zpk" title="Link to this heading"></a></h2>
 </section>
 </section>
 
