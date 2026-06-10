@@ -1,4 +1,4 @@
-# AudioToolbox
+# NeuralAudio
 
 This toolbox is an implementation of an auditory model of the cochlea as developed by Shamma et al, first developed in MATLAB by Powen Ru and colleagues (Neural Systems Laboratory, University of Maryland). Their original documentation, containing the theoretical basis of the implementation, can be found [here](http://nsl.isr.umd.edu/Files/auditory.pdf).
 
