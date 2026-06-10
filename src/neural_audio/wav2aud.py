@@ -18,32 +18,36 @@ def wav2aud(x: np.ndarray,
     """This function computes a biologically inspired spectrogram (also known as audiogram) of an acoustic waveform by simulating the 
     transduction mechanism of the ferret cochlea, following the NSL Matlab toolbox by Yang, Wang and Shamma (1992 and 1994).
     
-    A section of the cochlea spanning 128 hair-cells with a frequency selectivity calibrated to the range 180-7040Hz (given 
-    ``octave_shift=0``) are each simulated by
-    - convolving the signal with a corresponding cell-specific bandpass filter that is implemented as a second-order section infinite impulse response (IIR) function. The frames of the sliding-frame procedure are contiguous and non-overlapping.
-    - applying a non-linear activation function to the output of each filter, modeling the hair cell transduction. The nonlinearity can be a sigmoid, step function, rectified linear function, or identity function, depending on the value of ``sigmoid_factor``.
-    - applying a low-pass filter to the output of each nonlinearity, modeling the hair cell membrane potential. This step is skipped when ``sigmoid_factor`` is set to -2, which models a linear ionic channel mode without membrane potential dynamics.
-    - computing lateral inhibition between adjacent hair-cells by subtracting the output of each filter from the one above it, followed by half-wave rectification. Note, to compute lateral inhibition for the channel of highest frequency, an auxiliary hair-cell with higher frequency selectivtiy is used. This auxiliary hair-cell will not be represented with a separate channel in the output diagram.
-    - applying temporal integration (i.e. smoothing) to the output of the lateral inhibitory network, either by leaky integration (when ``time_constant`` is set to a positive value) or by single time-frame averaging (when ``time_constant`` is set to 0). 
+    A section of the cochlea spanning 128 hair-cells with a frequency selectivity calibrated to the range 180-7040Hz (given
+    ``octave_shift=0``) are each simulated by:
+
+        * convolving the signal with a corresponding cell-specific bandpass filter that is implemented as a second-order section infinite impulse response (IIR) function. The frames of the sliding-frame procedure are contiguous and non-overlapping.
+        * applying a non-linear activation function to the output of each filter, modeling the hair cell transduction. The nonlinearity can be a sigmoid, step function, rectified linear function, or identity function, depending on the value of ``sigmoid_factor``.
+        * applying a low-pass filter to the output of each nonlinearity, modeling the hair cell membrane potential. This step is skipped when ``sigmoid_factor`` is set to -2, which models a linear ionic channel mode without membrane potential dynamics.
+        * computing lateral inhibition between adjacent hair-cells by subtracting the output of each filter from the one above it, followed by half-wave rectification. Note, to compute lateral inhibition for the channel of highest frequency, an auxiliary hair-cell with higher frequency selectivity is used. This auxiliary hair-cell will not be represented with a separate channel in the output diagram.
+        * applying temporal integration (i.e. smoothing) to the output of the lateral inhibitory network, either by leaky integration (when ``time_constant`` is set to a positive value) or by single time-frame averaging (when ``time_constant`` is set to 0).
     
     :param x: The input waveform as a 1-D time-series of audio samples with a maximum sampling frequency of 16kHz. The use of lower 
         sampling rates is supported and has to be specified using the ``octave_shift`` parameter. Note, if the length of ``x`` is not
         an integer multiple of ``frame_length``, then ``x`` will be pre-padded with zeros to round up the length to that next integer multiple.
     :type x: numpy.ndarray
     :param octave_shift: At a default sampling rate of 16kHz, the simulated hair-cells span a frequency range of 180-7040 Hz, corresponding 
-        to the 64 muscial notes F#3-A8 whereby each note is covered by two hair-cells. These :math:`\approx 5.3` octaves will be shifted if the sampling rate 
-        of ``x`` deviates from its default. In particular, choose sampling rate and ``octave_shift` in line with the identity
+        to the 64 musical notes F#3-A8 whereby each note is covered by two hair-cells. These :math:`\\approx 5.3` octaves will be shifted if the sampling rate
+        of ``x`` deviates from its default. In particular, choose sampling rate and ``octave_shift`` in line with the identity
         :math:`sampling_rate = 16K * 2^{octave_shift}`. For example, set ``octave_shift`` to :math:`-1` for an 8 kHz sampling rate.
     :type octave_shift: int, optional, default=0
     :param frame_length: The length (in milliseconds) of a single frame used when convolving ``x`` with the filters. This is equal to the time span 
         of a single output time-frame. Common values: 8, 16, or others powers of two. 
     :type frame_length: int, optional, default=4
-    :param sigmoid_factor: Controlls the non-linear activation function applied to the raw filter outputs.
-    Possible values:
-            - :math:`> 0`: results in the use of a transistor-like sigmoid of the form :math:`\frac{1}{1+e^{-x/sigmoid_factor}}`, where larger values of ``sigmoid_factor`` result in a flatter slope.
-            - :math:`0`: results in the use of a step function centred at zero.
-            - :math:`-1`: results in a rectified linear function of the form :math:`max(0,x)`.
-            - other: results in an identity function.
+    :param sigmoid_factor: Controls the non-linear activation function applied to the raw filter outputs.
+
+        The possible values are:
+
+        * :math:`> 0` -- uses a transistor-like sigmoid of the form :math:`\\frac{1}{1+e^{-x / \\mathrm{sigmoid\\_factor}}}` where larger values of ``sigmoid_factor`` result in a flatter slope.
+        * :math:`0` -- uses a step function centred at zero.
+        * :math:`-1` -- uses a rectified linear function of the form :math:`\\max(0, x)`.
+        * other -- uses the identity function.
+
     :type sigmoid_factor: float, optional, default=-2
     :param time_constant: The non-negative time constant (in milliseconds) used for the temporal integration applied to the output of the 
         lateral inhibition network. If ``time_constant`` :math:`>0`, it results in leaky integration and larger values lead to stronger 
@@ -73,9 +77,9 @@ def wav2aud(x: np.ndarray,
              
     :type filters: dict, optional
 
-    :returns: `frequencies` (numpy.ndarray) - The :math:`M=128` characteristic frequencies of the simulated hair-cells in Hz.
-    :returns: `time_points' (numpy.ndarray) - The :math:`N=ceil(len(x) / frame_length)` time points corresponding to the center of each output frame in seconds.
-    :returns: `audiogram` (numpy.ndarray) - The auditory spectrogram of shape [:math:`[M,N]`], where :math:`M=128` is the number of frequency channels and :math:`N=ceil(len(x) / frame_length)` is the number of time-frames. 
+    :returns: - `frequencies` (numpy.ndarray) - The :math:`M=128` characteristic frequencies of the simulated hair-cells in Hz.
+            - `time_points` (numpy.ndarray) - The :math:`N=ceil(len(x) / frame_length)` time points corresponding to the center of each output frame in seconds.
+            - `audiogram` (numpy.ndarray) - The auditory spectrogram of shape [:math:`[M,N]`], where :math:`M=128` is the number of frequency channels and :math:`N=ceil(len(x) / frame_length)` is the number of time-frames.
     
     Example::
 
@@ -222,7 +226,7 @@ def wav2aud(x: np.ndarray,
         # lateral inhibitory network
         y3   = y2 - y2_h # y3 Models lateral inhibitory interactions among LIN neurons
         y2_h = y2
-        y4   = np.maximum(y3, 0) # y4 Half-wave rectified ``y3``, modelling threshold non-linearity in the llateral inhibition network
+        y4   = np.maximum(y3, 0) # y4 Half-wave rectified ``y3``, modelling threshold non-linearity in the lateral inhibition network
 
         # Temporal integration
         if alph:

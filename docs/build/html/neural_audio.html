@@ -113,13 +113,17 @@
 <span class="sig-prename descclassname"><span class="pre">neural_audio.wav2aud.</span></span><span class="sig-name descname"><span class="pre">wav2aud</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">octave_shift</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frame_length</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigmoid_factor</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">-2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_constant</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filters</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/neural_audio/wav2aud.html#wav2aud"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_audio.wav2aud.wav2aud" title="Link to this definition"></a></dt>
 <dd><p>This function computes a biologically inspired spectrogram (also known as audiogram) of an acoustic waveform by simulating the 
 transduction mechanism of the ferret cochlea, following the NSL Matlab toolbox by Yang, Wang and Shamma (1992 and 1994).</p>
-<p>A section of the cochlea spanning 128 hair-cells with a frequency selectivity calibrated to the range 180-7040Hz (given 
-<code class="docutils literal notranslate"><span class="pre">octave_shift=0</span></code>) are each simulated by
-- convolving the signal with a corresponding cell-specific bandpass filter that is implemented as a second-order section infinite impulse response (IIR) function. The frames of the sliding-frame procedure are contiguous and non-overlapping.
-- applying a non-linear activation function to the output of each filter, modeling the hair cell transduction. The nonlinearity can be a sigmoid, step function, rectified linear function, or identity function, depending on the value of <code class="docutils literal notranslate"><span class="pre">sigmoid_factor</span></code>.
-- applying a low-pass filter to the output of each nonlinearity, modeling the hair cell membrane potential. This step is skipped when <code class="docutils literal notranslate"><span class="pre">sigmoid_factor</span></code> is set to -2, which models a linear ionic channel mode without membrane potential dynamics.
-- computing lateral inhibition between adjacent hair-cells by subtracting the output of each filter from the one above it, followed by half-wave rectification. Note, to compute lateral inhibition for the channel of highest frequency, an auxiliary hair-cell with higher frequency selectivtiy is used. This auxiliary hair-cell will not be represented with a separate channel in the output diagram.
-- applying temporal integration (i.e. smoothing) to the output of the lateral inhibitory network, either by leaky integration (when <code class="docutils literal notranslate"><span class="pre">time_constant</span></code> is set to a positive value) or by single time-frame averaging (when <code class="docutils literal notranslate"><span class="pre">time_constant</span></code> is set to 0).</p>
+<p>A section of the cochlea spanning 128 hair-cells with a frequency selectivity calibrated to the range 180-7040Hz (given
+<code class="docutils literal notranslate"><span class="pre">octave_shift=0</span></code>) are each simulated by:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>convolving the signal with a corresponding cell-specific bandpass filter that is implemented as a second-order section infinite impulse response (IIR) function. The frames of the sliding-frame procedure are contiguous and non-overlapping.</p></li>
+<li><p>applying a non-linear activation function to the output of each filter, modeling the hair cell transduction. The nonlinearity can be a sigmoid, step function, rectified linear function, or identity function, depending on the value of <code class="docutils literal notranslate"><span class="pre">sigmoid_factor</span></code>.</p></li>
+<li><p>applying a low-pass filter to the output of each nonlinearity, modeling the hair cell membrane potential. This step is skipped when <code class="docutils literal notranslate"><span class="pre">sigmoid_factor</span></code> is set to -2, which models a linear ionic channel mode without membrane potential dynamics.</p></li>
+<li><p>computing lateral inhibition between adjacent hair-cells by subtracting the output of each filter from the one above it, followed by half-wave rectification. Note, to compute lateral inhibition for the channel of highest frequency, an auxiliary hair-cell with higher frequency selectivity is used. This auxiliary hair-cell will not be represented with a separate channel in the output diagram.</p></li>
+<li><p>applying temporal integration (i.e. smoothing) to the output of the lateral inhibitory network, either by leaky integration (when <code class="docutils literal notranslate"><span class="pre">time_constant</span></code> is set to a positive value) or by single time-frame averaging (when <code class="docutils literal notranslate"><span class="pre">time_constant</span></code> is set to 0).</p></li>
+</ul>
+</div></blockquote>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -127,30 +131,20 @@ transduction mechanism of the ferret cochlea, following the NSL Matlab toolbox b
 sampling rates is supported and has to be specified using the <code class="docutils literal notranslate"><span class="pre">octave_shift</span></code> parameter. Note, if the length of <code class="docutils literal notranslate"><span class="pre">x</span></code> is not
 an integer multiple of <code class="docutils literal notranslate"><span class="pre">frame_length</span></code>, then <code class="docutils literal notranslate"><span class="pre">x</span></code> will be pre-padded with zeros to round up the length to that next integer multiple.</p></li>
 <li><p><strong>octave_shift</strong> (<em>int</em><em>, </em><em>optional</em><em>, </em><em>default=0</em>) – At a default sampling rate of 16kHz, the simulated hair-cells span a frequency range of 180-7040 Hz, corresponding 
-to the 64 muscial notes F#3-A8 whereby each note is covered by two hair-cells. These <span class="math notranslate nohighlight">\(pprox 5.3\)</span> octaves will be shifted if the sampling rate 
-of <code class="docutils literal notranslate"><span class="pre">x</span></code> deviates from its default. In particular, choose sampling rate and <code class="docutils literal notranslate"><span class="pre">octave_shift`</span> <span class="pre">in</span> <span class="pre">line</span> <span class="pre">with</span> <span class="pre">the</span> <span class="pre">identity</span>
-<span class="pre">:math:`sampling_rate</span> <span class="pre">=</span> <span class="pre">16K</span> <span class="pre">*</span> <span class="pre">2^{octave_shift}`.</span> <span class="pre">For</span> <span class="pre">example,</span> <span class="pre">set</span> <span class="pre">``octave_shift</span></code> to <span class="math notranslate nohighlight">\(-1\)</span> for an 8 kHz sampling rate.</p></li>
+to the 64 musical notes F#3-A8 whereby each note is covered by two hair-cells. These <span class="math notranslate nohighlight">\(\approx 5.3\)</span> octaves will be shifted if the sampling rate
+of <code class="docutils literal notranslate"><span class="pre">x</span></code> deviates from its default. In particular, choose sampling rate and <code class="docutils literal notranslate"><span class="pre">octave_shift</span></code> in line with the identity
+<span class="math notranslate nohighlight">\(sampling_rate = 16K * 2^{octave_shift}\)</span>. For example, set <code class="docutils literal notranslate"><span class="pre">octave_shift</span></code> to <span class="math notranslate nohighlight">\(-1\)</span> for an 8 kHz sampling rate.</p></li>
 <li><p><strong>frame_length</strong> (<em>int</em><em>, </em><em>optional</em><em>, </em><em>default=4</em>) – The length (in milliseconds) of a single frame used when convolving <code class="docutils literal notranslate"><span class="pre">x</span></code> with the filters. This is equal to the time span 
 of a single output time-frame. Common values: 8, 16, or others powers of two.</p></li>
-<li><p><strong>sigmoid_factor</strong> – Controlls the non-linear activation function applied to the raw filter outputs.</p></li>
+<li><p><strong>sigmoid_factor</strong> (<em>float</em><em>, </em><em>optional</em><em>, </em><em>default=-2</em>) – <p>Controls the non-linear activation function applied to the raw filter outputs.</p>
+<p>The possible values are:</p>
+<ul>
+<li><p><span class="math notranslate nohighlight">\(&gt; 0\)</span> – uses a transistor-like sigmoid of the form <span class="math notranslate nohighlight">\(\frac{1}{1+e^{-x / \mathrm{sigmoid\_factor}}}\)</span> where larger values of <code class="docutils literal notranslate"><span class="pre">sigmoid_factor</span></code> result in a flatter slope.</p></li>
+<li><p><span class="math notranslate nohighlight">\(0\)</span> – uses a step function centred at zero.</p></li>
+<li><p><span class="math notranslate nohighlight">\(-1\)</span> – uses a rectified linear function of the form <span class="math notranslate nohighlight">\(\max(0, x)\)</span>.</p></li>
+<li><p>other – uses the identity function.</p></li>
 </ul>
-</dd>
-</dl>
-<dl class="simple">
-<dt>Possible values:</dt><dd><ul class="simple">
-<li><p><span class="math notranslate nohighlight">\(&gt; 0\)</span>: results in the use of a transistor-like sigmoid of the form :math:<a href="#id1"><span class="problematic" id="id2">`</span></a></p></li>
-</ul>
-</dd>
-<dt>rac{1}{1+e^{-x/sigmoid_factor}}`, where larger values of <code class="docutils literal notranslate"><span class="pre">sigmoid_factor</span></code> result in a flatter slope.</dt><dd><ul class="simple">
-<li><p><span class="math notranslate nohighlight">\(0\)</span>: results in the use of a step function centred at zero.</p></li>
-<li><p><span class="math notranslate nohighlight">\(-1\)</span>: results in a rectified linear function of the form <span class="math notranslate nohighlight">\(max(0,x)\)</span>.</p></li>
-<li><p>other: results in an identity function.</p></li>
-</ul>
-</dd>
-</dl>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
+</p></li>
 <li><p><strong>time_constant</strong> (<em>int</em><em>, </em><em>optional</em><em>, </em><em>default=0</em>) – The non-negative time constant (in milliseconds) used for the temporal integration applied to the output of the 
 lateral inhibition network. If <code class="docutils literal notranslate"><span class="pre">time_constant</span></code> <span class="math notranslate nohighlight">\(&gt;0\)</span>, it results in leaky integration and larger values lead to stronger 
 temporal smoothing of the output. If it is set to <span class="math notranslate nohighlight">\(0\)</span>, it results in simple averaging of the sub-samples within a single output time-frame.</p></li>
@@ -179,13 +173,12 @@ array. The ‘gain’ array should have length equal to the number of channels (
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><cite>frequencies</cite> (numpy.ndarray) - The <span class="math notranslate nohighlight">\(M=128\)</span> characteristic frequencies of the simulated hair-cells in Hz.</p>
-</dd>
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p><cite>time_points’ (numpy.ndarray) - The :math:`N=ceil(len(x) / frame_length)</cite> time points corresponding to the center of each output frame in seconds.</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><cite>audiogram</cite> (numpy.ndarray) - The auditory spectrogram of shape [<span class="math notranslate nohighlight">\([M,N]\)</span>], where <span class="math notranslate nohighlight">\(M=128\)</span> is the number of frequency channels and <span class="math notranslate nohighlight">\(N=ceil(len(x) / frame_length)\)</span> is the number of time-frames.</p>
+<dd class="field-even"><p><ul class="simple">
+<li><p><cite>frequencies</cite> (numpy.ndarray) - The <span class="math notranslate nohighlight">\(M=128\)</span> characteristic frequencies of the simulated hair-cells in Hz.</p></li>
+<li><p><cite>time_points</cite> (numpy.ndarray) - The <span class="math notranslate nohighlight">\(N=ceil(len(x) / frame_length)\)</span> time points corresponding to the center of each output frame in seconds.</p></li>
+<li><p><cite>audiogram</cite> (numpy.ndarray) - The auditory spectrogram of shape [<span class="math notranslate nohighlight">\([M,N]\)</span>], where <span class="math notranslate nohighlight">\(M=128\)</span> is the number of frequency channels and <span class="math notranslate nohighlight">\(N=ceil(len(x) / frame_length)\)</span> is the number of time-frames.</p></li>
+</ul>
+</p>
 </dd>
 </dl>
 <p>Example:</p>
@@ -212,14 +205,14 @@ array. The ‘gain’ array should have length equal to the number of channels (
 <div class="line">Original Author: Powen Ru (<a class="reference external" href="mailto:powen&#37;&#52;&#48;isr&#46;umd&#46;edu">powen<span>&#64;</span>isr<span>&#46;</span>umd<span>&#46;</span>edu</a>), NSL, UMD</div>
 </div>
 <aside class="footnote-list brackets">
-<aside class="footnote brackets" id="id3" role="doc-footnote">
+<aside class="footnote brackets" id="id1" role="doc-footnote">
 <span class="label"><span class="fn-bracket">[</span>1<span class="fn-bracket">]</span></span>
 <p>Yang, X., Wang, K., and Shamma, S. A. (1992). “Auditory
 representations of acoustic signals.” <em>IEEE Transactions on
 Information Theory</em>, 38(2), 824-839.
 <a class="reference external" href="https://doi.org/10.1109/18.119739">https://doi.org/10.1109/18.119739</a></p>
 </aside>
-<aside class="footnote brackets" id="id4" role="doc-footnote">
+<aside class="footnote brackets" id="id2" role="doc-footnote">
 <span class="label"><span class="fn-bracket">[</span>2<span class="fn-bracket">]</span></span>
 <p>Wang, K., and Shamma, S. A. (1994). “Self-normalization and
 noise-robustness in early auditory representations.” <em>IEEE
