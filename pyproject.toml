@@ -82,7 +82,7 @@ tests = [
 
 [project.urls]
 
-"Homepage" = "https://pypi.org/project/audio_toolbox/"
+"Homepage" = "https://pypi.org/project/neural_audio/"
 
 "Bug Tracker" = "https://github.com/ninocapipoca/NSLAudioToolbox"
  

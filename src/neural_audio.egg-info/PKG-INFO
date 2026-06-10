@@ -1,10 +1,10 @@
 Metadata-Version: 2.4
 Name: neural_audio
-Version: 0.0.1
+Version: 0.0.2
 Summary: A library for bio-inspired sound processing.
 Author: C L Nina Matos
 License: MIT
-Project-URL: Homepage, https://pypi.org/project/audio_toolbox/
+Project-URL: Homepage, https://pypi.org/project/neural_audio/
 Project-URL: Bug Tracker, https://github.com/ninocapipoca/NSLAudioToolbox
 Classifier: Programming Language :: Python :: 3.11
 Classifier: License :: OSI Approved :: MIT License
@@ -27,6 +27,9 @@ Requires-Dist: ipywidgets; extra == "tutorials"
 Requires-Dist: soundfile; extra == "tutorials"
 Provides-Extra: tests
 Requires-Dist: parameterized; extra == "tests"
+Requires-Dist: soundfile; extra == "tests"
+Requires-Dist: unittest; extra == "tests"
+Requires-Dist: pathlib; extra == "tests"
 Dynamic: license-file
 
 # AudioToolbox
