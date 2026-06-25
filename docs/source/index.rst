@@ -6,14 +6,12 @@
 Welcome to NeuralAudio's documentation!
 ========================================
 
-This project is also available on `GitHub. <https://github.com/ninocapipoca/neural_audio>`_
+This project is also available on `GitHub <https://github.com/ninocapipoca/neural_audio>`_
 
 Installation
-==================
+-----------------
 
-The package is available on `PyPI <https://pypi.org/project/neural-audio/>`_ and 
-can be installed using ``pip install neural-audio``.
-
+The package is available on `PyPI <https://pypi.org/project/neural-audio/>`_ and can be installed using ``pip install neural-audio``.
 
 
 .. toctree::
