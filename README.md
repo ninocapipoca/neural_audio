@@ -11,7 +11,7 @@ This package is available on [PyPI](https://pypi.org/project/neural-audio/) can 
 
 ### Important to note
  - When filter coefficients were exported from MATLAB as a CSV and loaded in directly, they resulted in filters with significant numerical instability, even when using `sosfilt`. They were then exported in `zpk` format and this seemed to fix the problem, but the reason for this is unclear.
- - The behavior of other filters beyond those produced by the work of Shamma et al has not been tested. While it is possible to load in different filters, the function may not behave as expected. Custom filters requires converting the zpk information to a numpy-specific format (npz). See documentation for details.
+ - The behavior of other filters beyond those produced by the work of Shamma et al has not been tested. While it is possible to load in different filters, the function may not behave as expected. Information on how to use custom filters is available in the documentation and corresponding tutorial (see below).
  - The correctness of the functions was tested against the MATLAB implementation, and numerically corresponds to the MATLAB output with an absolute tolerance of 0.01.
 
 ## Tutorials and documentation
