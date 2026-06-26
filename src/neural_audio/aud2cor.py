@@ -2,7 +2,7 @@ import numpy as np
 
 def corcplxw(z, fout):
     """Write complex matrix to binary file."""
-    data = np.concatenate([np.real(z).ravel(), np.imag(z).ravel()])
+    data = np.concatenate([np.real(z).ravel(order="F"), np.imag(z).ravel(order="F")])
     fout.write(data.astype(np.float32).tobytes())
 
 
@@ -88,22 +88,20 @@ def aud2cor(y, para1, rv, sv, fname, DISP=0):
 
         for sgn in [1, -1]:
 
-            # Build causal / anti-causal rate filter
             if sgn > 0:
-                # Single-sideband → double-sideband
-                HR_full = np.concatenate([HR, np.zeros(N1)])
+                HR = np.concatenate([HR, np.zeros(N1, dtype=complex)])
+
             else:
-                HR_conj = np.concatenate([
-                    [HR[0]],
-                    np.conj(HR[1:][::-1])
+                HR = np.concatenate([
+                    HR[:1],
+                    np.conj(HR[1:N2][::-1])
                 ])
-                HR_full = np.concatenate([HR, HR_conj[1:]])
-                HR_full[N1] = abs(HR_full[N1 + 1])
+                HR[N1] = abs(HR[N1+1])
 
             # --- First IFFT (along time axis) pulled out of scale loop ---
             z1_freq = np.zeros((N2, M1), dtype=complex)
             for m in range(M1):
-                z1_freq[:, m] = HR_full * Y[:, m]
+                z1_freq[:, m] = HR * Y[:, m]
             z1 = np.fft.ifft(z1_freq, axis=0)   # (N2, M1)
             z1 = z1[ndx1, :]                     # (N+2*dN, M1)
 
@@ -118,9 +116,7 @@ def aud2cor(y, para1, rv, sv, fname, DISP=0):
                     z[n, :] = R1[mdx1]
 
                 # Store in output array
-                # sgn==+1 → columns 0..K1-1 (upward rates)
-                # sgn==-1 → columns K1..2*K1-1 (downward rates)
-                col = rdx if sgn == 1 else rdx + K1
+                col = rdx + (K1 if sgn == 1 else 0)
                 cr[sdx, col, :, :] = z
 
                 if not TMP:
@@ -134,33 +130,59 @@ def aud2cor(y, para1, rv, sv, fname, DISP=0):
 # Filter generators — stubs matching the MATLAB originals             #
 # ------------------------------------------------------------------ #
 
-def gen_cort(fc, N1, STF, params):
-    """
-    Generate temporal (rate) cortical filter in the frequency domain.
-    fc     : characteristic rate (Hz)
-    N1     : half FFT length
-    STF    : sampling rate of the spectrogram (frames/sec)
-    params : [filter_index, total_filters]  (used for bandwidth shaping)
-    """
-    t = np.arange(N1) / STF
-    # Gammatone-like impulse response, then FFT
-    h = (t ** 2) * np.exp(-3.5 * 2 * np.pi * fc * t) * np.sin(2 * np.pi * fc * t)
-    if np.max(np.abs(h)) > 0:
-        h /= np.max(np.abs(h))
-    return np.fft.fft(h)[:N1]
+def gen_cort(fc, L, STF, PASS=None):
+    if PASS is None:
+        PASS = [2, 3]
+
+    t = np.arange(L) / STF * fc
+
+    h = np.sin(2*np.pi*t) * t**2 * np.exp(-3.5*t) * fc
+
+    h = h - np.mean(h)
+
+    H0 = np.fft.fft(h, 2*L)
+
+    A = np.angle(H0[:L])
+    H = np.abs(H0[:L])
+
+    maxi = np.argmax(H)
+    H /= H[maxi]
+
+    if PASS[0] == 1:
+        H[:maxi] = 1
+    elif PASS[0] == PASS[1]:
+        H[maxi+1:] = 1
+
+    return H * np.exp(1j*A)
 
 
-def gen_corf(fc, M1, SRF, params):
-    """
-    Generate spectral (scale) cortical filter in the frequency domain.
-    fc     : characteristic scale (cyc/oct)
-    M1     : half FFT length
-    SRF    : spectral sampling rate (channels/oct)
-    params : [filter_index, total_filters]
-    """
-    x = np.arange(M1) / SRF
-    # Gaussian derivative-like spectral filter
-    h = fc * x * np.exp(-0.5 * (2 * fc * x) ** 2)
-    if np.max(np.abs(h)) > 0:
-        h /= np.max(np.abs(h))
-    return np.fft.fft(h)[:M1]
+def gen_corf(fc, L, SRF, KIND=2):
+
+    if np.isscalar(KIND):
+        PASS = [2,3]
+    else:
+        PASS = KIND
+        KIND = 2
+
+    R1 = np.arange(L)/L * SRF/2/abs(fc)
+
+    if KIND == 1:
+        C1 = 1/(2*.3*.3)
+        H = np.exp(-C1*(R1-1)**2) + np.exp(-C1*(R1+1)**2)
+    else:
+        R1 = R1**2
+        H = R1*np.exp(1-R1)
+
+    if PASS[0] == 1:
+        maxi = np.argmax(H)
+        s = np.sum(H)
+        H[:maxi] = 1
+        H = H/np.sum(H)*s
+
+    elif PASS[0] == PASS[1]:
+        maxi = np.argmax(H)
+        s = np.sum(H)
+        H[maxi+1:] = 1
+        H = H/np.sum(H)*s
+
+    return H
