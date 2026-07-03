@@ -80,7 +80,7 @@ def aud2cor(y, para1, rv, sv, fname, DISP=0):
     fout.write(header.tobytes())
 
     # ------------------------------------------------------------------ #
-    # Main loop: rate × direction × scale                                 #
+    # Main loop: rate × direction × scale                                #
     # ------------------------------------------------------------------ #
     for rdx in range(K1):
         fc_rt = rv[rdx]
@@ -135,7 +135,6 @@ def gen_cort(fc, L, STF, PASS=None):
         PASS = [2, 3]
 
     t = np.arange(L) / STF * fc
-
     h = np.sin(2*np.pi*t) * t**2 * np.exp(-3.5*t) * fc
 
     h = h - np.mean(h)
