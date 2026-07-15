@@ -75,7 +75,7 @@ def wav2aud(x: np.ndarray,
 
     :returns: `frequencies` (numpy.ndarray) - The :math:`M=128` characteristic frequencies of the simulated hair-cells in Hz.
     :returns: `time_points' (numpy.ndarray) - The :math:`N=ceil(len(x) / frame_length)` time points corresponding to the center of each output frame in seconds.
-    :returns: `audiogram` (numpy.ndarray) - The auditory spectrogram of shape [:math:`[M,N]`], where :math:`M=128` is the number of frequency channels and :math:`N=ceil(len(x) / frame_length)` is the number of time-frames. 
+    :returns: `audiogram` (numpy.ndarray) - The auditory spectrogram of shape [:math:`[N,M]`], where :math:`M=128` is the number of frequency channels and :math:`N=ceil(len(x) / frame_length)` is the number of time-frames. 
     
     Example::
 

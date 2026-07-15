@@ -1,3 +1,11 @@
+from pathlib import Path
+
+def load_sound_file_paths2(): # using pathlib instead
+    directory = Path(__file__).resolve().parent
+
+    # returns path objects
+    return sorted(p for p in directory.glob('*.wav'))
+
 import os
 
 def load_sound_file_paths():
