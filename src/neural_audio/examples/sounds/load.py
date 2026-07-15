@@ -1,10 +1,15 @@
 from pathlib import Path
 
-def load_sound_file_paths2(): # using pathlib instead
-    directory = Path(__file__).resolve().parent
+def load_sound_file_paths2(synthetic: bool=False): # using pathlib instead
+
+    # uses natural sounds by default
+    sound_dir = Path(__file__).resolve().parent
+
+    if synthetic: # if true, use synthetic sounds
+         sound_dir = sound_dir / 'synthetic_sounds'
 
     # returns path objects
-    return sorted(p for p in directory.glob('*.wav'))
+    return sorted(p for p in sound_dir.glob('*.wav'))
 
 import os
 

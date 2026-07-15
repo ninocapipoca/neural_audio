@@ -72,6 +72,30 @@ def plot_spectrogram(matrix: np.ndarray,
     plt.ylabel("Frequency (Hz)")
     plt.gca().yaxis.set_major_formatter(ticker.ScalarFormatter())
 
+def plot_cr_projection(cr, rates, cmap="viridis", figsize=(15, 4)):
+    # TODO unfinished plotting function
+    """
+    Plot a 2D projection of the cortical representation.
+    
+    cr : np.ndarray
+        4-D cortical output with shape (num_scales, num_rates, num_time, num_freq).
+    rates : vector of temporal rates used as the corresponding parameter in `aud2cor`
+    cmap : str
+        Matplotlib colormap name.
+    figsize : tuple
+        Figure size for the 3-panel plot.
+    """
+    if cr.ndim != 4:
+        raise ValueError("cr must be a 4-D array with shape (scale, rate, time, frequency).")
+
+    # select first half of rates (positive values, 'upwards movement'), average over time dimension
+    cr_up = np.squeeze(np.mean(np.abs(cr[:, :len(rates), :, :]), axis=2))
+
+    # do the same for second half of rates (negative values, 'downwards movement')
+    cr_down = np.squeeze(np.mean(np.abs(cr[:, len(rates):2*len(rates), :, :]), axis=2))
+
+    return
+
 def save_wav(signal: np.ndarray, sf: int, filepath: Path) -> None:
     """
     Saves a 1-D signal as a .wav file, normalized to 16-bit PCM (pulse code modulation) range.

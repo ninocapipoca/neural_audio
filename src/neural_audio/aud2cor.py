@@ -19,8 +19,6 @@ def aud2cor(y: np.ndarray,
     """
     Cortical rate-scale representation (forward transform).
 
-    Parameters
-    ----------
     :param y: The result of wav2aud; the auditory spectrogram of shape [:math:`[N,M]`], where :math:`M=128` is the number of frequency channels and :math:`N=ceil(len(x) / frame_length)` is the number of time-frames.
     :type y: numpy.ndarray
 
@@ -28,15 +26,8 @@ def aud2cor(y: np.ndarray,
     :type tp_margin: float
 
 
-    Returns
-    -------
-    cr : ndarray (num_scales, num_rates*2, N+2*dN, M+2*dM) — cortical representation
+    :returns: `cr` - Cortical representation (numpy.ndarray), shape (num_scales, num_rates*2, N+2*dN, M+2*dM)
     """
-
-    # --- Parameters ---
-    #para1 = [paras tp_margin sp_margin bandpass]
-    #paras = [frmlen, tc, fac, shft]
-    # complete params = [frmlen, tc, fac, shft, tp_margin, sp_margin, bandpass]
 
     # TODO Data types check
 
@@ -146,6 +137,8 @@ def aud2cor(y: np.ndarray,
                     corcplxw(z, fout)
     if write_file:
         fout.close()
+
+
     return cr
 
 
@@ -207,5 +200,4 @@ def gen_corf(fc, L, ch_per_oct, KIND=2):
         H[maxi+1:] = 1
         H = H/np.sum(H)*s
 
-    # TODO - return rates and scales as well (compute explicitly)
     return H
