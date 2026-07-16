@@ -94,6 +94,40 @@ def plot_cr_projection(cr, rates, cmap="viridis", figsize=(15, 4)):
     # do the same for second half of rates (negative values, 'downwards movement')
     cr_down = np.squeeze(np.mean(np.abs(cr[:, len(rates):2*len(rates), :, :]), axis=2))
 
+    cr_avgr = (cr_up + cr_down) / 2 # average rate (over time), produces [scale x rate x frequency]
+
+    # average out one of the dimensions at a time
+    scale_rate = np.mean(cr_avgr, axis=2) # [scale x rate]
+    scale_freq = np.mean(cr_avgr, axis=1) # [scale x frequency]
+    rate_freq = np.mean(cr_avgr, axis=0) # [rate x frequency]
+
+    # --- Plotting ---
+    fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(12, 4))
+
+    # Scale-Rate
+    im1 = ax1.imshow(scale_rate, aspect='auto', origin='lower')
+    ax1.set_xlabel('Rate [Hz]')
+    ax1.set_ylabel('Scale [cyc/oct]')
+    ax1.set_title('Scale-Rate')
+    plt.colorbar(im1, ax=ax1)
+
+    # Scale-Frequency
+    im2 = ax2.imshow(scale_freq, aspect='auto', origin='lower')
+    ax2.set_xlabel('Frequency [Hz]')
+    ax2.set_ylabel('Scale [cyc/oct]')
+    ax2.set_title('Scale-Frequency')
+    plt.colorbar(im2, ax=ax2)
+
+    # Rate-Frequency
+    im3 = ax3.imshow(rate_freq, aspect='auto', origin='lower')
+    ax3.set_xlabel('Frequency [Hz]')
+    ax3.set_ylabel('Rate [Hz]')
+    ax3.set_title('Rate-Frequency')
+    plt.colorbar(im3, ax=ax3)
+
+    plt.tight_layout()
+    plt.show()
+
     return
 
 def save_wav(signal: np.ndarray, sf: int, filepath: Path) -> None:
