@@ -39,3 +39,158 @@ def sigmoid(y: np.ndarray, fac:int) -> np.ndarray:
         return np.maximum(y, 0)
     else:
         return y
+
+
+def gen_temporal_modulations(num_bursts: int=None, duration: int=2, sf: int=16000) -> np.ndarray:
+    """
+    Generates a signal with only temporal modulations - every frequency is present but only at infinitesimally 
+    small, evenly spaced bursts. 
+    
+    Useful to build test cases or for early exploration of the toolbox.
+
+    :param num_bursts: The number of bursts in the signal. If none specified, is set to ``np.ceil(duration/5)``
+    :type num_bursts: int, optional, default=None
+
+    :param duration: Duration of the signal, in seconds
+    :type duration: int, optional, default=2
+
+    :param sf: Sampling frequency in Hz, used in the calculation of the number of time points (``duration * sf``) 
+        and hence defines the signal's temporal resolution
+    :type sf: int, optional, default=16000
+
+    :returns: 1D signal of shape (duration*sf,); for example, if your sampling frequency is 16kHz and you have a duration of
+    2 seconds, your output signal will have length 32kHz.
+    :rtype: numpy.ndarray
+    """
+    t = np.arange(0, duration, 1/sf) 
+
+    if num_bursts is None:
+        num_bursts = int(np.ceil(duration/5))
+
+    # create short evenly spaced bursts
+    v_stripes = np.zeros_like(t)
+    burst_idxs = np.linspace(0, len(t) - 1, num_bursts, dtype=int)
+    v_stripes[burst_idxs] = 1.0
+
+    return v_stripes
+
+def gen_spectral_modulations(num_sinusoids: int=6, 
+                             f_min: int=180,
+                             f_max: int=7040,
+                             duration: int=2, 
+                             sf: int=16000) -> np.ndarray:
+    """
+    Generates a signal with only spectral modulations - different frequencies are present but they are constant in time.
+    Useful to build test cases or for early exploration of the toolbox.
+
+    :param num_sinusoids: The number of different frequencies present in the signal. These will be linearly spaced on the 
+        log scale.
+    :type num_sinusoids: int, optional, default=6
+
+    :param f_min: The minimum frequency present in the signal, in Hz
+    :type f_min: int, optional, default=180
+
+    :param f_max: The maximum frequency present in the signal, in Hz
+    :type f_max: int, optional, default=7040
+
+    :param duration: Duration of the signal, in seconds
+    :type duration: int, optional, default=2
+
+    :param sf: Sampling frequency in Hz, used in the calculation of the number of time points (``duration * sf``) 
+        and hence defines the signal's temporal resolution
+    :type sf: int, optional, default=16000
+
+    :returns: 1D signal of shape (duration*sf,); for example, if your sampling frequency is 16kHz and you have a duration of
+    2 seconds, your output signal will have length 32kHz.
+    :rtype: numpy.ndarray
+
+    .. warning:: If you plan on using this signal with ``wav2aud`` make sure that the maximum and minimum frequencies are
+        within the calibrated range. For the default ``wav2aud`` parameters (octave shift 0, sampling rate 16kHz) the range is 180-7040Hz. 
+        For non-default paramters, you may need to adjust ``f_min`` and ``f_max`` accordingly. See ``wav2aud`` documentation or 
+        the corresponding tutorial for more information on these adjustments.
+    """
+    t = np.arange(0, duration, 1/sf) 
+
+    h_stripes = 0
+    for freq in np.geomspace(f_min, f_max, num_sinusoids):
+        h_stripes += np.sin(2 * np.pi * freq * t)
+
+    return h_stripes
+
+def gen_ripple(rate: float, 
+               scale: float, 
+               duration: float = 2.0, 
+               sf: int = 16000,
+               f_min: float = 180, 
+               f_max: float = 7040, 
+               num_channels: int = 128,
+               mod_depth: float = 0.9, 
+               phase: float = 0.0) -> np.ndarray:
+    """
+    Generates a sinusoidal ripple stimulus following the description in Chi et al. (2005), caption of Fig. 1(b):
+
+    :math:`S(t, x) = 1 + A \sin (2\pi(wt + \Omega x) + \Phi)`
+
+    where x is position along the log-frequency axis in octaves relative to `f_min`,
+    w (rate) is the ripple velocity in Hz, and Omega (scale) is the ripple density
+    in cycles/octave.
+
+    A ripple stimulus (the signal) is made up of many pure sinusoids, log-spaced in frequency between `f_min` and `f_max`, 
+    which are each amplitude-modulated by S(t, x) evaluated at their own octave position x, then summed.
+    Here, S(t,x) is referred to as the ripple function, which is not the same as the signal
+    itself; it only describes how the signal changes across time and frequency.
+
+    :param rate: Ripple velocity (w), in Hz. Controls how quickly the stimulus modulations happen in time. 
+        Sign controls sweep direction (up/down).
+    :type rate: float
+
+    :param scale: Ripple density (Omega), in cycles/octave. Controls how frequency modulations in the stimulus occur.
+    :type scale: float
+
+    :param duration: Duration of the signal, in seconds.
+    :type duration: float
+
+    :param sf: Sampling frequency, in Hz.
+    :type sf: int, optional, default=16000
+
+    :param f_min: Lowest carrier (sinusoid) frequency, in Hz.
+    :type f_min: float, optional, default=180
+
+    :param f_max: Highest carrier (sinusoid) frequency, in Hz.
+    :type f_max: float, optional, default=7040
+
+    :param num_channels: Number of log-spaced carrier sinusoids spanning f_min-f_max.
+    :type num_channels: int, optional, default=128
+
+    :param mod_depth: Modulation depth (A). Should be <= 1 to avoid negative envelope values. 
+        Controls the amplitude of the ripple curve. Controls how extreme the changes in the 
+        stimulus are (i.e, the contrast).
+    :type mod_depth: float, optional, default=0.9
+
+    :param phase: Ripple phase (Phi), in radians. Shifts ripple curve, changing where the 
+        peaks and troughs sit relative to the frequency channels.
+    :type phase: float, optional, default=0
+
+    :returns: 1D signal of shape (duration*sf,).
+    :rtype: numpy.ndarray
+
+    .. rubric:: References
+
+    .. [1] Chi, Taishih & Ru, Powen & Shamma, Shihab (2005),
+        "Multiresolution spectrotemporal analysis of complex sounds" ,
+        The Journal of the Acoustical Society of America, 118, 887-906, 
+        10.1121/1.1945807
+    """
+    t = np.arange(0, duration, 1 / sf)
+
+    # log-spaced carrier frequencies and their octave positions
+    freqs = np.geomspace(f_min, f_max, num_channels)
+    rel_pos = np.log2(freqs / f_min) # relative position in octaves, 0 at f_min
+
+    signal = np.zeros_like(t)
+    for f, pos in zip(freqs, rel_pos):
+        envelope = 1 + mod_depth * np.sin(2 * np.pi * (rate * t + scale * pos) + phase)
+        signal += envelope * np.sin(2 * np.pi * f * t)
+
+    #signal /= num_channels
+    return signal

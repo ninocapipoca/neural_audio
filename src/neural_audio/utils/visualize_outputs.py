@@ -72,63 +72,85 @@ def plot_spectrogram(matrix: np.ndarray,
     plt.ylabel("Frequency (Hz)")
     plt.gca().yaxis.set_major_formatter(ticker.ScalarFormatter())
 
-def plot_cr_projection(cr, rates, cmap="viridis", figsize=(15, 4)):
-    # TODO unfinished plotting function
+def plot_cr_projection(cr, rates, scales=None, frequencies=None,
+                        time_margin=None, cmap="viridis", figsize=(12, 4)):
     """
-    Plot a 2D projection of the cortical representation.
-    
+    Plot 2D projections (scale-rate, scale-frequency, rate-frequency)
+    of a cortical representation.
+
     cr : np.ndarray
-        4-D cortical output with shape (num_scales, num_rates, num_time, num_freq).
-    rates : vector of temporal rates used as the corresponding parameter in `aud2cor`
-    cmap : str
-        Matplotlib colormap name.
-    figsize : tuple
-        Figure size for the 3-panel plot.
+        4-D cortical output, shape (num_scales, num_rates*2, num_time, num_freq).
+    rates : array-like
+        Rate vector used in aud2cor (length = num_rates, i.e. half of cr.shape[1]).
+    scales : array-like, optional
+        Scale vector used in aud2cor (for real tick labels). If None, axis shows index.
+    frequencies : array-like, optional
+        Characteristic frequencies (for real tick labels). If None, axis shows index.
+    time_margin : int, optional
+        If you used tp_margin > 0 in aud2cor, pass the number of margin samples
+        to crop from each end of the time axis before averaging (mirrors the
+        `500:end-500` cropping in the original MATLAB script).
     """
     if cr.ndim != 4:
         raise ValueError("cr must be a 4-D array with shape (scale, rate, time, frequency).")
+    if cr.shape[1] != 2 * len(rates):
+        raise ValueError(
+            f"cr.shape[1] ({cr.shape[1]}) must equal 2*len(rates) ({2*len(rates)})."
+        )
 
-    # select first half of rates (positive values, 'upwards movement'), average over time dimension
-    cr_up = np.squeeze(np.mean(np.abs(cr[:, :len(rates), :, :]), axis=2))
+    n_rate = len(rates)
 
-    # do the same for second half of rates (negative values, 'downwards movement')
-    cr_down = np.squeeze(np.mean(np.abs(cr[:, len(rates):2*len(rates), :, :]), axis=2))
+    # optionally crop time margins before averaging
+    if time_margin:
+        t_slice = slice(time_margin, cr.shape[2] - time_margin)
+    else:
+        t_slice = slice(None)
 
-    cr_avgr = (cr_up + cr_down) / 2 # average rate (over time), produces [scale x rate x frequency]
+    cr_up = np.mean(np.abs(cr[:, :n_rate, t_slice, :]), axis=2)
+    cr_down = np.mean(np.abs(cr[:, n_rate:2*n_rate, t_slice, :]), axis=2)
+    cr_avgr = (cr_up + cr_down) / 2  # [scale x rate x frequency]
 
-    # average out one of the dimensions at a time
-    scale_rate = np.mean(cr_avgr, axis=2) # [scale x rate]
-    scale_freq = np.mean(cr_avgr, axis=1) # [scale x frequency]
-    rate_freq = np.mean(cr_avgr, axis=0) # [rate x frequency]
+    scale_rate = np.mean(cr_avgr, axis=2)   # [scale x rate]
+    scale_freq = np.mean(cr_avgr, axis=1)   # [scale x frequency]
+    rate_freq = np.mean(cr_avgr, axis=0)    # [rate x frequency]
 
-    # --- Plotting ---
-    fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(12, 4))
+    fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=figsize)
 
-    # Scale-Rate
-    im1 = ax1.imshow(scale_rate, aspect='auto', origin='lower')
-    ax1.set_xlabel('Rate [Hz]')
-    ax1.set_ylabel('Scale [cyc/oct]')
+    im1 = ax1.imshow(scale_rate, aspect='auto', origin='lower', cmap=cmap)
+    ax1.set_xlabel('Rate [Hz]'); ax1.set_ylabel('Scale [cyc/oct]')
     ax1.set_title('Scale-Rate')
     plt.colorbar(im1, ax=ax1)
 
-    # Scale-Frequency
-    im2 = ax2.imshow(scale_freq, aspect='auto', origin='lower')
-    ax2.set_xlabel('Frequency [Hz]')
-    ax2.set_ylabel('Scale [cyc/oct]')
+    im2 = ax2.imshow(scale_freq, aspect='auto', origin='lower', cmap=cmap)
+    ax2.set_xlabel('Frequency [Hz]'); ax2.set_ylabel('Scale [cyc/oct]')
     ax2.set_title('Scale-Frequency')
     plt.colorbar(im2, ax=ax2)
 
-    # Rate-Frequency
-    im3 = ax3.imshow(rate_freq, aspect='auto', origin='lower')
-    ax3.set_xlabel('Frequency [Hz]')
-    ax3.set_ylabel('Rate [Hz]')
+    im3 = ax3.imshow(rate_freq, aspect='auto', origin='lower', cmap=cmap)
+    ax3.set_xlabel('Frequency [Hz]'); ax3.set_ylabel('Rate [Hz]')
     ax3.set_title('Rate-Frequency')
     plt.colorbar(im3, ax=ax3)
 
-    plt.tight_layout()
-    plt.show()
+    # optional: real tick labels instead of array indices
+    if frequencies is not None:
+        f_idx = np.linspace(0, len(frequencies)-1, 6).astype(int)
+        for ax in (ax2, ax3):
+            ax.set_xticks(f_idx)
+            ax.set_xticklabels([f"{frequencies[i]:.0f}" for i in f_idx], rotation=45)
+    if rates is not None:
+        r_idx = np.linspace(0, len(rates)-1, 6).astype(int)
+        for ax in (ax1, ax3):
+            ax.set_yticks(r_idx) if ax is ax3 else ax.set_xticks(r_idx)
+            labels = [f"{rates[i]:.1f}" for i in r_idx]
+            ax.set_yticklabels(labels) if ax is ax3 else ax.set_xticklabels(labels)
+    if scales is not None:
+        s_idx = np.linspace(0, len(scales)-1, 6).astype(int)
+        for ax in (ax1, ax2):
+            ax.set_yticks(s_idx)
+            ax.set_yticklabels([f"{scales[i]:.1f}" for i in s_idx])
 
-    return
+    plt.tight_layout()
+    return fig, (ax1, ax2, ax3)
 
 def save_wav(signal: np.ndarray, sf: int, filepath: Path) -> None:
     """
