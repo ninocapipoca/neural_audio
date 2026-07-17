@@ -120,8 +120,8 @@ def aud2cor(y: np.ndarray,
     # Main loop: rate × direction × scale                                #
     # ------------------------------------------------------------------ #
     for rdx in range(num_rates):
-        fc_rt = rates[rdx]
-        HR = gen_cort(fc_rt, N_pad, fps, [rdx + 1 + bandpass, num_rates + bandpass * 2])
+        cf_rt = rates[rdx]
+        HR = gen_cort(cf_rt, N_pad, fps, [rdx + 1 + bandpass, num_rates + bandpass * 2])
 
         for sgn in [1, -1]:
 
@@ -140,8 +140,8 @@ def aud2cor(y: np.ndarray,
             z1 = z1[ndx1, :]                     # (N+2*dN, M_pad)
 
             for sdx in range(num_scales):
-                fc_sc = scales[sdx]
-                HS = gen_corf(fc_sc, M_pad, ch_per_oct, [sdx + 1 + bandpass, num_scales + bandpass * 2])
+                cycles_per_oct = scales[sdx]
+                HS = gen_corf(cycles_per_oct, M_pad, ch_per_oct, [sdx + 1 + bandpass, num_scales + bandpass * 2])
 
                 # --- Second IFFT (along frequency axis) ---
                 z = np.zeros((N + 2 * dN, M + 2 * dM), dtype=complex)
@@ -166,57 +166,139 @@ def aud2cor(y: np.ndarray,
 # Filter generators — stubs matching the MATLAB originals             #
 # ------------------------------------------------------------------ #
 
-def gen_cort(fc, L, fps, PASS=None):
+def gen_cort(cf: float, filt_len: int, sf: int, PASS=None):
+    """ 
+    Calculates temporal filter transfer function in the frequency domain based on the given
+    parameters.
 
-    t = np.arange(L) / fps * fc
-    h = np.sin(2*np.pi*t) * t**2 * np.exp(-3.5*t) * fc #gamma func as defined in Chi(2005)
+    The time points t are built from a vector of indices from 0 to L-1, which are then
+    divided by the sampling rate and multiplied by the characteristic frequency, which
+    converts time to 'one period of the characteristic frequency'. This helps standardize
+    the shape of the impulse response across different sampling rates.
 
-    h = h - np.mean(h)
+    The shape of the temporal impulse response `h` is a gamma function as described in Chi(2005), which
+    is then multiplied by `cf` to ensure similar behavior across different center frequencies.
+    The result is adjusted to have zero-mean (remove zero-frequencies). 
+    
+    The Fourier transform of `h` is computed to convert this time-domain representation into the frequency domain, 
+    which is useful for computationally efficient convolution/filtering. The output `H0` contains both positive 
+    and negative frequencies, but only the positive frequencies are taken here. This allows us to build a filter that is 
+    sensitive to modulation direction: the filter responds only to positive modulation frequencies, 
+    and after conjugation, it responds only to negative modulation frequencies.
 
-    H0 = np.fft.fft(h, 2*L)
+    The amplitude and phase information are stored separately, the ampltiude is normalized by the maximum and then
+    the lowpass, highpass or bandpass characteristics are implemented, depending on the value of `pass`. For a 
+    lowpass filter, everything up to the maximum of H is flattened to 1 (ideal pass). Likewise, 
+    for highpass behavior, everything from the maximum of H until the end is flattened to 1. If bandpass behavior
+    is specified, H remains unchanged. The amplitude and phase are then used to construct the transfer function
+    (complex-valued frequency response) for the filter, given by `H * np.exp(1j*A)`
 
-    A = np.angle(H0[:L])
-    H = np.abs(H0[:L])
+    :param cf: Characteristic frequency, in Hz
+    :type cf: float
 
-    maxi = np.argmax(H)
-    H /= H[maxi]
+    :param filt_len: Length of the filter, ideally a power of 2 for computational efficiency
+    :type filt_len: int
 
+    :param sf: Sampling frequency, in Hz
+    :type sf: int
+
+    :param PASS: Array of shape [idx, num_rates]. Dictates passband. 
+        If none supplied, defaults to bandpass. Possible values and outcomes:
+            - `idx = 1`: lowpass
+            - `1 < idx < num_rates` or `None`: bandpass
+            - `idx = num_rates`: highpass
+    :type PASS: np.ndarray
+
+    :returns: numpy.ndarray - Complex-valued filter transfer function (in frequency domain)
+    """
+    # TODO - check PASS type
+    t = np.arange(filt_len) / sf * cf
+
+    #gamma func as defined in Chi(2005)
+    time_resp = np.sin(2*np.pi*t) * t**2 * np.exp(-3.5*t) * cf 
+
+    # h is t_impulse_response
+    time_resp = time_resp - np.mean(time_resp)
+
+    # convert to frequency domain, get phase and amplitude
+    freq_resp = np.fft.fft(time_resp, 2*filt_len) 
+
+    phase = np.angle(freq_resp[:filt_len])
+    amplitude = np.abs(freq_resp[:filt_len])
+
+    # normalize amplitude
+    max_idx = np.argmax(amplitude)
+    amplitude /= amplitude[max_idx]
+
+    # change amplitude if necessary according to passband requirements
     if PASS is not None:
         if PASS[0] == 1: # lowpass
-            H[:maxi] = 1
+            amplitude[:max_idx] = 1
         elif PASS[0] == PASS[1]: # highpass
-            H[maxi+1:] = 1
+            amplitude[max_idx+1:] = 1
 
-    return H * np.exp(1j*A)
+    return amplitude * np.exp(1j*phase)
 
 
-def gen_corf(fc, L, ch_per_oct, KIND=2):
+def gen_corf(cycles_per_oct, filt_len, ch_per_oct, KIND=2):
+    """ 
+    Calculates frequency-domain transfer function for a spectral filter based on
+    the given parameters.
 
+    A scale (`octave_offsets`) is calculated: the relative position along the filter length
+    is mapped to a frequency axis of one octave, then divided by two to span half an octave 
+    instead. The higher the number of channels per octave, the higher your number of 'steps'
+    (units) and hence the higher the frequency resolution. This scale is divided by the
+    number of cycles per octave, producing units of 'channels per 0.5 cycles'.
+
+    Two functions can be used to define the filter response, either a Gabor function or the
+    negative second derivative of a Gaussian. Importantly, it is their frequency-domain forms
+    that are used.
+
+    For a lowpass filter, everything up to the maximum is flattened to 1 (ideal pass). Likewise, 
+    for highpass filtering, everything from the maximum until the end is flattened to 1. In both
+    cases, the sum of the transfer function is readjusted to preserve the filter's gain across all
+    passbands. If bandpass behavior is specified, the transfer function remains unchanged. 
+
+    :param cycles_per_oct: (Spectral) modulation rate in cycles per octave
+    :type cycles_per_oct: int
+
+    :param filter_len: Filter length, ideally a power of 2
+    :type filter_len: int
+
+    :param ch_per_oct: Frequency resolution in channels per octave
+    :type ch_per_oct: int
+
+    :returns: np.ndarray - Filter transfer function (in frequency domain)
+    """
+    # TODO - Update docstring once the bottom todo is finished
+    # TODO - Add causal/non causal explanation
+    # TODO - Change function design to make this KIND/PASS thing less awkward
     if np.isscalar(KIND):
         PASS = [2,3]
     else:
         PASS = KIND
         KIND = 2
 
-    R1 = np.arange(L)/L * ch_per_oct/2/abs(fc)
+    octave_offsets = np.arange(filt_len)/filt_len * ch_per_oct/2/abs(cycles_per_oct)
 
     if KIND == 1:
         C1 = 1/(2*.3*.3)
-        H = np.exp(-C1*(R1-1)**2) + np.exp(-C1*(R1+1)**2)
+        freq_tf = np.exp(-C1*(octave_offsets-1)**2) + np.exp(-C1*(octave_offsets+1)**2)
     else:
-        R1 = R1**2
-        H = R1*np.exp(1-R1)
+        octave_offsets = octave_offsets**2
+        freq_tf = octave_offsets*np.exp(1-octave_offsets)
 
     if PASS[0] == 1:
-        maxi = np.argmax(H)
-        s = np.sum(H)
-        H[:maxi] = 1
-        H = H/np.sum(H)*s
+        max_idx = np.argmax(freq_tf)
+        s = np.sum(freq_tf)
+        freq_tf[:max_idx] = 1
+        freq_tf = freq_tf/np.sum(freq_tf)*s
 
     elif PASS[0] == PASS[1]:
-        maxi = np.argmax(H)
-        s = np.sum(H)
-        H[maxi+1:] = 1
-        H = H/np.sum(H)*s
+        max_idx = np.argmax(freq_tf)
+        s = np.sum(freq_tf)
+        freq_tf[max_idx+1:] = 1
+        freq_tf = freq_tf/np.sum(freq_tf)*s
 
-    return H
+    return freq_tf
