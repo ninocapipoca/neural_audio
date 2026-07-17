@@ -101,12 +101,11 @@ def aud2cor(y: np.ndarray,
 
     dN   = int(np.floor(N / 2 * tp_margin))
     ndx  = np.arange(0, N + 2 * dN)   # time indices into IFFT output
-    ndx1 = ndx                         # same; kept separate to match MATLAB
+    ndx1 = ndx
 
     # --- Output array ---
     cr = np.zeros((num_scales, num_rates * 2, N + 2 * dN, M + 2 * dM), dtype=complex)
 
-    # NOTE - Consider separating file handling
     # --- Open output file ---
     write_file = len(fname) > 0
     if write_file:
@@ -136,7 +135,7 @@ def aud2cor(y: np.ndarray,
             # --- First IFFT (along time axis) pulled out of scale loop ---
             z1_freq = np.zeros((2*N_pad, M_pad), dtype=complex)
             for m in range(M_pad):
-                z1_freq[:, m] = HR * Y[:, m]
+                z1_freq[:, m] = HR * Y[:, m] # equivalent to convolution (with frequency-domain wavelet) using convolution theorem
             z1 = np.fft.ifft(z1_freq, axis=0)   # (2*N_pad, M_pad) trying to match original freq and time to s.t. modulation patterns found
             z1 = z1[ndx1, :]                     # (N+2*dN, M_pad)
 
@@ -168,8 +167,6 @@ def aud2cor(y: np.ndarray,
 # ------------------------------------------------------------------ #
 
 def gen_cort(fc, L, fps, PASS=None):
-    if PASS is None:
-        PASS = [2, 3]
 
     t = np.arange(L) / fps * fc
     h = np.sin(2*np.pi*t) * t**2 * np.exp(-3.5*t) * fc #gamma func as defined in Chi(2005)
@@ -184,10 +181,11 @@ def gen_cort(fc, L, fps, PASS=None):
     maxi = np.argmax(H)
     H /= H[maxi]
 
-    if PASS[0] == 1:
-        H[:maxi] = 1
-    elif PASS[0] == PASS[1]:
-        H[maxi+1:] = 1
+    if PASS is not None:
+        if PASS[0] == 1: # lowpass
+            H[:maxi] = 1
+        elif PASS[0] == PASS[1]: # highpass
+            H[maxi+1:] = 1
 
     return H * np.exp(1j*A)
 
