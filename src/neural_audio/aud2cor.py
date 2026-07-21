@@ -85,8 +85,7 @@ def aud2cor(y: np.ndarray,
     for n in range(N):
         R1 = np.fft.fft(y[n, :], 2*M_pad)
         Y[n, :] = R1[:M_pad]
-    for m in range(M_pad): # !! fft on output of previous (Y)
-        # NOTE Allows you to capture interaction
+    for m in range(M_pad): # fft on output of previous (Y) to capture interaction
         R1 = np.fft.fft(Y[:N, m], 2*N_pad)
         Y[:, m] = R1
 
