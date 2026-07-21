@@ -194,3 +194,79 @@ def gen_ripple(rate: float,
 
     #signal /= num_channels
     return signal
+
+def gen_temporal_modulations_rate(rate: float, duration: float = 2, sf: int = 16000) -> np.ndarray:
+    """
+    Generates a signal containing only temporal modulations at a specified
+    modulation rate.
+
+    The signal consists of evenly spaced impulses, with ``rate`` bursts per
+    second. Every acoustic frequency is therefore present, while the temporal
+    modulation is controlled solely by the burst spacing.
+
+    :param rate: Temporal modulation rate in Hz (bursts per second).
+    :type rate: float
+
+    :param duration: Signal duration in seconds.
+    :type duration: float, optional
+
+    :param sf: Sampling frequency in Hz.
+    :type sf: int, optional
+
+    :returns: 1-D signal of length ``duration * sf``.
+    :rtype: numpy.ndarray
+    """
+    t = np.arange(0, duration, 1 / sf)
+
+    num_bursts = max(1, int(np.round(rate * duration)))
+
+    signal = np.zeros_like(t)
+    burst_idxs = np.linspace(0, len(t) - 1, num_bursts, dtype=int)
+    signal[burst_idxs] = 1.0
+
+    return signal
+
+def gen_spectral_modulations_scale(scale: float, f_min: float = 180, f_max: float = 7040, 
+                                   duration: float = 2, sf: int = 16000, num_channels: int = 128) -> np.ndarray:
+    """
+    Generates a signal containing only spectral modulations at a specified
+    spectral modulation scale.
+
+    The signal is formed by summing log-spaced sinusoids whose amplitudes follow
+    a sinusoidal envelope across the log-frequency axis.
+
+    :param scale: Spectral modulation scale in cycles/octave.
+    :type scale: float
+
+    :param f_min: Lowest carrier frequency (Hz).
+    :type f_min: float
+
+    :param f_max: Highest carrier frequency (Hz).
+    :type f_max: float
+
+    :param duration: Signal duration in seconds.
+    :type duration: float
+
+    :param sf: Sampling frequency in Hz.
+    :type sf: int
+
+    :param num_channels: Number of log-spaced carrier frequencies.
+    :type num_channels: int
+
+    :returns: 1-D signal of length ``duration * sf``.
+    :rtype: numpy.ndarray
+    """
+    t = np.arange(0, duration, 1 / sf)
+
+    freqs = np.geomspace(f_min, f_max, num_channels)
+
+    # position in octaves relative to f_min
+    octave_pos = np.log2(freqs / f_min)
+
+    signal = np.zeros_like(t)
+
+    for f, x in zip(freqs, octave_pos):
+        amplitude = np.sin(2 * np.pi * scale * x)
+        signal += amplitude * np.sin(2 * np.pi * f * t)
+
+    return signal

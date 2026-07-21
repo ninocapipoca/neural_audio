@@ -175,3 +175,104 @@ def save_wav(signal: np.ndarray, sf: int, filepath: Path) -> None:
     print(f"Successfully saved .wav file to {filepath}")
 
     return
+
+def plot_tempfilt_response(H, fps, center=None, max_freq=None,
+                           title=None, ax=None):
+    """Plot the magnitude response of a single temporal filter.
+
+    :param H: Frequency response returned by ``gen_cort``.
+    :type H: numpy.ndarray
+    :param fps: Frame rate (frames per second) used to generate the filter.
+    :type fps: float
+    :param center: Optional center frequency to mark with a vertical line.
+    :type center: float, optional
+    :param max_freq: If given, limit the displayed frequency axis.
+    :type max_freq: float, optional
+    :param title: Optional plot title.
+    :type title: str, optional
+    :param ax: Existing matplotlib axes to draw on. A new figure/axes is
+        created if omitted.
+    :type ax: matplotlib.axes.Axes, optional
+
+    :returns: The axes the filter response was drawn on.
+    :rtype: matplotlib.axes.Axes
+    """
+
+    freqs = np.fft.fftfreq(2 * len(H), d=1 / fps)[:len(H)]
+
+    if max_freq is not None:
+        mask = freqs <= max_freq
+        freqs = freqs[mask]
+        H = H[mask]
+
+    if ax is None:
+        _, ax = plt.subplots(figsize=(6, 3))
+
+    ax.plot(freqs, np.abs(H), lw=1)
+
+    if center is not None:
+        ax.axvline(center, color="k", linestyle="--", linewidth=1,
+                   label=f"Center = {center:g} Hz")
+        ax.legend()
+
+    ax.set_xlabel("Frequency (Hz)")
+    ax.set_ylabel("Gain")
+
+    if title is not None:
+        ax.set_title(title)
+
+    ax.grid(True)
+
+    return ax
+
+def plot_spectfilt_response(H, ch_per_oct, max_scale=None, title=None, ax=None):
+    """Plot the magnitude response of a single cortical scale (spectral)
+    filter, as produced by one call to ``gen_corf``.
+ 
+    :param H: The filter's magnitude response, i.e. the array returned by
+        ``gen_corf(fc, L, ch_per_oct, KIND)``. Its length is used directly
+        to build the frequency axis, so pass in ``H`` exactly as returned.
+    :type H: numpy.ndarray
+    :param ch_per_oct: Channels per octave used when ``H`` was generated
+        (the same ``ch_per_oct`` / ``SRF`` argument passed to ``gen_corf``).
+        Needed here to convert array index into cycles/octave.
+    :type ch_per_oct: int
+    :param max_scale: If given, the x-axis is cut off at this scale
+        (cycles/octave) for readability. This only changes the view, not
+        the data -- the full ``H`` is still plotted underneath.
+    :type max_scale: float, optional
+    :param title: Optional title for the plot.
+    :type title: str, optional
+    :param ax: Existing matplotlib axes to draw on. A new figure/axes is
+        created if this is omitted.
+    :type ax: matplotlib.axes.Axes, optional
+ 
+    :returns: The axes the filter response was drawn on.
+    :rtype: matplotlib.axes.Axes
+ 
+    .. note:: ``gen_corf`` returns a purely real magnitude array (no phase
+        term, unlike ``gen_cort``)
+    """
+    H = np.asarray(H)
+    L = len(H)
+ 
+    # Real frequency axis in cyc/oct: index m of H corresponds to
+    # m/L * ch_per_oct/2 (same derivation as R1 inside gen_corf, just
+    # without dividing out fc).
+    freqs = np.arange(L) / L * ch_per_oct / 2
+ 
+    if ax is None:
+        _, ax = plt.subplots(figsize=(6, 4))
+ 
+    ax.plot(freqs, H)
+    ax.set_xlabel("Scale (cycles/octave)")
+    ax.set_ylabel("Magnitude")
+ 
+    if title is not None:
+        ax.set_title(title)
+ 
+    if max_scale is not None:
+        ax.set_xlim(0, max_scale)
+
+    ax.grid(True)
+    return ax
