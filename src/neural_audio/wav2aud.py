@@ -15,7 +15,7 @@ def wav2aud(x: np.ndarray,
             verbose: bool=False, 
             filters: Dict=dict()) -> Tuple[np.ndarray, np.ndarray, np.ndarray]: 
     
-    """This function computes a biologically inspired spectrogram (also known as audiogram) of an acoustic waveform by simulating the 
+    r"""This function computes a biologically inspired spectrogram (also known as audiogram) of an acoustic waveform by simulating the
     transduction mechanism of the ferret cochlea, following the NSL Matlab toolbox by Yang, Wang and Shamma (1992 and 1994).
     
     A section of the cochlea spanning 128 hair-cells with a frequency selectivity calibrated to the range 180-7040Hz (given 

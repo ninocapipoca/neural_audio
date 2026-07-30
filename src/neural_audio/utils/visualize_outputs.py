@@ -175,6 +175,139 @@ def plot_cr_projection(cr, rates, scales=None, frequencies=None,
     plt.tight_layout()
     return fig, (ax1, ax2, ax3)
 
+
+def plot_cr_temporal(cr, rates, scales=None, frequencies=None, time_points=None,
+                     cmap="viridis", figsize=(15, 4)):
+    """Plot time-resolved projections (rate-time, scale-time, frequency-time)
+    of a cortical representation.
+
+    :func:`plot_cr_projection` collapses the time axis and therefore shows only the
+    *time-averaged* modulation content, hiding how the cortical energy evolves over the
+    course of the stimulus. This function instead keeps **time on the horizontal axis**
+    and collapses the two axes that are not being examined, giving three complementary
+    time-resolved views:
+
+    - **Rate-Time**: how temporal-modulation (rate) energy changes over time
+      (averaged over scale and frequency).
+    - **Scale-Time**: how spectral-modulation (scale) energy changes over time
+      (averaged over rate and frequency).
+    - **Frequency-Time**: how per-channel energy changes over time
+      (averaged over scale and rate).
+
+    Design choices:
+
+    - The **magnitude** ``|cr|`` is used. ``aud2cor`` returns a complex (analytic) output;
+      its magnitude is the modulation *envelope*, which is the interpretable, non-oscillating
+      quantity to track over time (the phase is discussed in the tutorial).
+    - The two sweep directions (upward/downward) are **averaged** together, matching
+      :func:`plot_cr_projection`, so the two functions can be read side by side. Pass a
+      single-direction slice of ``cr`` if you want to inspect one direction on its own.
+
+    :param cr: 4-D cortical output, shape ``(num_scales, num_rates*2, num_time, num_freq)``.
+        ``num_time`` / ``num_freq`` may include the margins added by ``aud2cor``'s
+        ``tp_margin`` / ``sp_margin``; margin rows/columns are shown but left unlabeled.
+    :type cr: numpy.ndarray
+    :param rates: Rate vector used in ``aud2cor`` (length ``= num_rates``, i.e. half of
+        ``cr.shape[1]``).
+    :type rates: array-like
+    :param scales: Scale vector used in ``aud2cor`` (for real y-tick labels on the
+        Scale-Time panel). If ``None``, the axis shows the channel index.
+    :type scales: array-like, optional
+    :param frequencies: Characteristic frequencies from ``wav2aud`` (for real y-tick labels
+        on the Frequency-Time panel). If ``None``, the axis shows the channel index.
+    :type frequencies: array-like, optional
+    :param time_points: Time values (in seconds) for the *unpadded* time frames, e.g. the
+        ``time_points`` returned by ``wav2aud``. Used for real x-tick labels; when shorter
+        than ``cr``'s time axis (because ``tp_margin > 0`` was used) the labels are offset
+        into the real-data region. If ``None``, the axis shows the frame index.
+    :type time_points: array-like, optional
+    :param cmap: Matplotlib colormap name.
+    :type cmap: str, optional, default='viridis'
+    :param figsize: Figure size passed to ``plt.subplots``.
+    :type figsize: tuple, optional, default=(15, 4)
+
+    :returns: The created figure and its three axes ``(fig, (ax_rate, ax_scale, ax_freq))``.
+    :rtype: tuple
+    """
+    if cr.ndim != 4:
+        raise ValueError("cr must be a 4-D array with shape (scale, rate, time, frequency).")
+    if cr.shape[1] != 2 * len(rates):
+        raise ValueError(
+            f"cr.shape[1] ({cr.shape[1]}) must equal 2*len(rates) ({2*len(rates)})."
+        )
+
+    n_rate = len(rates)
+
+    # magnitude of the analytic output, averaged over the two sweep directions
+    mag = (np.abs(cr[:, :n_rate, :, :]) + np.abs(cr[:, n_rate:2*n_rate, :, :])) / 2  # [scale, rate, time, freq]
+
+    rate_time = mag.mean(axis=(0, 3))          # [rate, time]
+    scale_time = mag.mean(axis=(1, 3))         # [scale, time]
+    freq_time = mag.mean(axis=(0, 1)).T        # [freq, time]
+
+    n_time_actual = mag.shape[2]
+
+    fig, axes = plt.subplots(1, 3, figsize=figsize)
+
+    plots = [
+        {"ax": axes[0], "data": rate_time, "ylabel": "Rate [Hz]", "title": "Rate-Time"},
+        {"ax": axes[1], "data": scale_time, "ylabel": "Scale [cyc/oct]", "title": "Scale-Time"},
+        {"ax": axes[2], "data": freq_time, "ylabel": "Frequency [Hz]", "title": "Frequency-Time"},
+    ]
+
+    for p in plots:
+        ax = p["ax"]
+        im = ax.imshow(p["data"], aspect='auto', origin='lower', cmap=cmap)
+        ax.set_xlabel("Time [s]" if time_points is not None else "Time [frame]")
+        ax.set_ylabel(p["ylabel"])
+        ax.set_title(p["title"])
+        plt.colorbar(im, ax=ax)
+
+    ax_rate, ax_scale, ax_freq = axes
+
+    # Time ticks (x-axis on all panels), offset into the real-data region if margins exist
+    if time_points is not None:
+        dN = (n_time_actual - len(time_points)) // 2
+        if dN < 0:
+            raise ValueError(
+                f"len(time_points) ({len(time_points)}) exceeds cr's time dimension "
+                f"({n_time_actual}); time_points must correspond to the unpadded time axis."
+            )
+        t_idx = np.linspace(0, len(time_points) - 1, 6).astype(int)
+        t_ticks = t_idx + dN
+        t_labels = [f"{time_points[i]:.2f}" for i in t_idx]
+        for ax in axes:
+            ax.set_xticks(t_ticks)
+            ax.set_xticklabels(t_labels, rotation=45)
+
+    # Rate ticks (y-axis on ax_rate; rates are not padded)
+    r_idx = np.linspace(0, n_rate - 1, 6).astype(int)
+    ax_rate.set_yticks(r_idx)
+    ax_rate.set_yticklabels([f"{rates[i]:.1f}" for i in r_idx])
+
+    # Scale ticks (y-axis on ax_scale; scales are not padded)
+    if scales is not None:
+        s_idx = np.linspace(0, len(scales) - 1, 6).astype(int)
+        ax_scale.set_yticks(s_idx)
+        ax_scale.set_yticklabels([f"{scales[i]:.1f}" for i in s_idx])
+
+    # Frequency ticks (y-axis on ax_freq), offset into the real-data region
+    if frequencies is not None:
+        n_freq_actual = freq_time.shape[0]
+        dM = (n_freq_actual - len(frequencies)) // 2
+        if dM < 0:
+            raise ValueError(
+                f"len(frequencies) ({len(frequencies)}) exceeds cr's frequency dimension "
+                f"({n_freq_actual}); frequencies must correspond to the unpadded axis."
+            )
+        f_idx = np.linspace(0, len(frequencies) - 1, 6).astype(int)
+        ax_freq.set_yticks(f_idx + dM)
+        ax_freq.set_yticklabels([f"{frequencies[i]:.0f}" for i in f_idx])
+
+    plt.tight_layout()
+    return fig, (ax_rate, ax_scale, ax_freq)
+
+
 def save_wav(signal: np.ndarray, sf: int, filepath: Path) -> None:
     """
     Saves a 1-D signal as a .wav file, normalized to 16-bit PCM (pulse code modulation) range.
@@ -253,7 +386,7 @@ def plot_spectfilt_response(H, ch_per_oct, max_scale=None, title=None, ax=None):
     filter, as produced by one call to ``gen_corf``.
  
     :param H: The filter's magnitude response, i.e. the array returned by
-        ``gen_corf(fc, L, ch_per_oct, KIND)``. Its length is used directly
+        ``gen_corf(fc, L, ch_per_oct, func_type)``. Its length is used directly
         to build the frequency axis, so pass in ``H`` exactly as returned.
     :type H: numpy.ndarray
     :param ch_per_oct: Channels per octave used when ``H`` was generated

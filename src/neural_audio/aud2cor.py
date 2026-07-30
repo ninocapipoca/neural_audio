@@ -315,8 +315,8 @@ def gen_corf(cycles_per_oct: int, filt_len: int, ch_per_oct: int, func_type='gau
     :param cycles_per_oct: (Spectral) modulation rate in cycles per octave
     :type cycles_per_oct: int
 
-    :param filter_len: Filter length, ideally a power of 2
-    :type filter_len: int
+    :param filt_len: Filter length, ideally a power of 2
+    :type filt_len: int
 
     :param ch_per_oct: Frequency resolution in channels per octave
     :type ch_per_oct: int

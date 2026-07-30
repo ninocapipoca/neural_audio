@@ -126,7 +126,7 @@ def gen_ripple(rate: float,
                num_channels: int = 128,
                mod_depth: float = 0.9, 
                phase: float = 0.0) -> np.ndarray:
-    """
+    r"""
     Generates a sinusoidal ripple stimulus following the description in Chi et al. (2005), caption of Fig. 1(b):
 
     :math:`S(t, x) = 1 + A \sin (2\pi(wt + \Omega x) + \Phi)`
@@ -226,14 +226,17 @@ def gen_temporal_modulations_rate(rate: float, duration: float = 2, sf: int = 16
 
     return signal
 
-def gen_spectral_modulations_scale(scale: float, f_min: float = 180, f_max: float = 7040, 
-                                   duration: float = 2, sf: int = 16000, num_channels: int = 128) -> np.ndarray:
+def gen_spectral_modulations_scale(scale: float, f_min: float = 180, f_max: float = 7040,
+                                   duration: float = 2, sf: int = 16000, num_channels: int = 128,
+                                   seed: int = 0) -> np.ndarray:
     """
     Generates a signal containing only spectral modulations at a specified
     spectral modulation scale.
 
-    The signal is formed by summing log-spaced sinusoids whose amplitudes follow
-    a sinusoidal envelope across the log-frequency axis.
+    The signal is formed by summing log-spaced sinusoidal carriers whose amplitudes
+    follow a sinusoidal envelope across the log-frequency axis. Each carrier is given
+    a random starting phase (see note below) so that the resulting audiogram shows
+    the intended horizontal spectral stripes without interference artefacts.
 
     :param scale: Spectral modulation scale in cycles/octave.
     :type scale: float
@@ -253,8 +256,20 @@ def gen_spectral_modulations_scale(scale: float, f_min: float = 180, f_max: floa
     :param num_channels: Number of log-spaced carrier frequencies.
     :type num_channels: int
 
+    :param seed: Seed for the random carrier phases. A fixed value keeps the output
+        reproducible; pass a different value for an independent realisation.
+    :type seed: int, optional, default=0
+
     :returns: 1-D signal of length ``duration * sf``.
     :rtype: numpy.ndarray
+
+    .. note:: The carriers are given random starting phases rather than all starting
+        in phase at :math:`t=0`. Densely log-spaced carriers fall within each cochlear
+        filter's bandwidth and beat against one another; when they share a common phase
+        origin this beating is coherent and produces a deterministic, frequency-swept
+        interference ("fingerprint") pattern in the audiogram. Randomising the phases
+        decorrelates the beating (approximating the broadband-noise carrier described by
+        Chi et al., 2005) and leaves only the intended horizontal spectral stripes.
     """
     t = np.arange(0, duration, 1 / sf)
 
@@ -263,10 +278,14 @@ def gen_spectral_modulations_scale(scale: float, f_min: float = 180, f_max: floa
     # position in octaves relative to f_min
     octave_pos = np.log2(freqs / f_min)
 
+    # random per-carrier phases so carriers do not all cohere at t=0 (see note)
+    rng = np.random.default_rng(seed)
+    phases = rng.uniform(0, 2 * np.pi, size=num_channels)
+
     signal = np.zeros_like(t)
 
-    for f, x in zip(freqs, octave_pos):
+    for f, x, phi in zip(freqs, octave_pos, phases):
         amplitude = np.sin(2 * np.pi * scale * x)
-        signal += amplitude * np.sin(2 * np.pi * f * t)
+        signal += amplitude * np.sin(2 * np.pi * f * t + phi)
 
     return signal
