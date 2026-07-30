@@ -37,15 +37,16 @@ def plot_spectrogram(matrix: np.ndarray,
         plt.tight_layout()
         plt.show()
 
-    :param matrix: 2-D array of magnitude values to plot, of shape (len(frequencies), len(time_points)).
+    :param matrix: 2-D array of magnitude values to plot, of shape (len(time_points), len(frequencies)),
+        matching the (time points, frequencies) orientation of `wav2aud`'s audiogram output.
         Values are converted to decibels internally; values less than or equal to zero are clipped to
         a small positive constant beforehand to avoid taking the log of zero.
     :type matrix: numpy.ndarray
 
-    :param time_points: 1-D array of time values (in seconds) corresponding to the columns of ``matrix``.
+    :param time_points: 1-D array of time values (in seconds) corresponding to the rows of ``matrix``.
     :type time_points: numpy.ndarray
 
-    :param frequencies: 1-D array of frequency values (in Hz) corresponding to the rows of ``matrix``.
+    :param frequencies: 1-D array of frequency values (in Hz) corresponding to the columns of ``matrix``.
     :type frequencies: numpy.ndarray
 
     :param title: Title displayed above the plot.
@@ -63,7 +64,7 @@ def plot_spectrogram(matrix: np.ndarray,
     plt.title(title)
 
     # pcolormesh so the linearly-spaced FFT bins can be mapped onto a log-scaled frequency axis
-    plt.pcolormesh(time_points, frequencies, to_decibel(matrix))
+    plt.pcolormesh(time_points, frequencies, to_decibel(matrix).T) # NOTE - added transpose here
     plt.colorbar(label='Magnitude (dB)')
 
     plt.xlabel("Time (s)")

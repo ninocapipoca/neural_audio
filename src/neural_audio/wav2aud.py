@@ -247,4 +247,5 @@ def wav2aud(x: np.ndarray,
         logger.debug(f"Finished processing. \n\t-Output audiogram shape: {audiogram.shape}, \n\t-time points shape: {time_points.shape}, \n\t-characteristic frequencies: {frequencies[0]} - {frequencies[0]}Hz.")
 
     # Outputs
-    return time_points, frequencies, audiogram.T
+    # NOTE - changed audiogram.T to audiogram
+    return time_points, frequencies, audiogram 

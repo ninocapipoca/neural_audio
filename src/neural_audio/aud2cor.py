@@ -154,6 +154,8 @@ def aud2cor(y: np.ndarray,
     ndx  = np.arange(0, N + 2 * dN)   # time indices into IFFT output
     ndx1 = ndx
 
+    print(f"dN is {dN}")
+
     # --- Output array ---
     cr = np.zeros((num_scales, num_rates * 2, N + 2 * dN, M + 2 * dM), dtype=complex)
 
