@@ -74,26 +74,62 @@ def plot_spectrogram(matrix: np.ndarray,
     plt.gca().yaxis.set_major_formatter(ticker.ScalarFormatter())
 
 
+def cr_projections(cr, rates):
+    """Compute the three 2-D projections of a cortical representation.
+
+    The magnitude ``|cr|`` is averaged over the two sweep directions and over the time
+    axis, then collapsed onto each remaining pair of axes. This is the shared computation
+    behind :func:`plot_cr_projection`; it is exposed separately so a cortical
+    representation can be reduced to its (small) projections without also plotting.
+
+    :param cr: 4-D cortical output, shape (num_scales, num_rates*2, num_time, num_freq).
+    :type cr: numpy.ndarray
+    :param rates: Rate vector used in aud2cor (length = num_rates, i.e. half of cr.shape[1]).
+    :type rates: array-like
+
+    :returns: Tuple ``(scale_rate, scale_freq, rate_freq)`` of 2-D arrays.
+    :rtype: tuple
+    """
+    n_rate = len(rates)
+    # magnitude, sweep directions averaged, then time-averaged -> [scale, rate, freq]
+    cr_avgr = ((np.abs(cr[:, :n_rate]) + np.abs(cr[:, n_rate:2 * n_rate])) / 2).mean(axis=2)
+    return cr_avgr.mean(2), cr_avgr.mean(1), cr_avgr.mean(0)
+
+
 def plot_cr_projection(cr, rates, scales=None, frequencies=None,
-                        cmap="viridis", figsize=(12, 4)):
+                       cmap="viridis", figsize=(12, 4), axes=None):
     """
     Plot 2D projections (scale-rate, scale-frequency, rate-frequency)
     of a cortical representation.
 
-    cr : np.ndarray
-        4-D cortical output, shape (num_scales, num_rates*2, num_time, num_freq).
-        num_time and num_freq may include zero/wrap-around margins added by
-        aud2cor's tp_margin / sp_margin (no cropping is done here; margin
-        columns/rows are shown but left unlabeled).
-    rates : array-like
-        Rate vector used in aud2cor (length = num_rates, i.e. half of cr.shape[1]).
-    scales : array-like, optional
-        Scale vector used in aud2cor (for real tick labels). If None, axis shows index.
-    frequencies : array-like, optional
-        Characteristic frequencies from wav2aud (for real tick labels). If None,
-        axis shows index. Length is expected to be <= cr.shape[3]; if cr's frequency
-        axis is wider (because sp_margin > 0 was used in aud2cor), the extra margin
-        columns are included in the plot but left unlabeled.
+    :param cr: 4-D cortical output, shape (num_scales, num_rates*2, num_time, num_freq).
+        num_time and num_freq may include zero/wrap-around margins added by aud2cor's
+        tp_margin / sp_margin (no cropping is done here; margin columns/rows are shown
+        but left unlabeled).
+    :type cr: numpy.ndarray
+    :param rates: Rate vector used in aud2cor (length = num_rates, i.e. half of cr.shape[1]).
+    :type rates: array-like
+    :param scales: Scale vector used in aud2cor (for real tick labels). If None, the axis
+        shows the index.
+    :type scales: array-like, optional
+    :param frequencies: Characteristic frequencies from wav2aud (for real tick labels). If
+        None, the axis shows the index. Length is expected to be <= cr.shape[3]; if cr's
+        frequency axis is wider (because sp_margin > 0 was used in aud2cor), the extra
+        margin columns are included in the plot but left unlabeled.
+    :type frequencies: array-like, optional
+    :param cmap: Matplotlib colormap name.
+    :type cmap: str, optional, default='viridis'
+    :param figsize: Figure size, used only when a new figure is created (``axes=None``).
+    :type figsize: tuple, optional, default=(12, 4)
+    :param axes: Optional sequence of exactly 3 existing axes to draw the
+        (scale-rate, scale-frequency, rate-frequency) panels into -- e.g. one row of a
+        larger subplot grid, so several representations can be compared in a single figure.
+        If None, a new 1x3 figure is created.
+    :type axes: sequence of matplotlib.axes.Axes, optional
+
+    :returns: The figure and its three axes
+        ``(fig, (ax_scale_rate, ax_scale_freq, ax_rate_freq))``.
+    :rtype: tuple
     """
     if cr.ndim != 4:
         raise ValueError("cr must be a 4-D array with shape (scale, rate, time, frequency).")
@@ -102,15 +138,7 @@ def plot_cr_projection(cr, rates, scales=None, frequencies=None,
             f"cr.shape[1] ({cr.shape[1]}) must equal 2*len(rates) ({2*len(rates)})."
         )
 
-    n_rate = len(rates)
-
-    cr_up = np.mean(np.abs(cr[:, :n_rate, :, :]), axis=2)
-    cr_down = np.mean(np.abs(cr[:, n_rate:2*n_rate, :, :]), axis=2)
-    cr_avgr = (cr_up + cr_down) / 2  # [scale x rate x frequency]
-
-    scale_rate = np.mean(cr_avgr, axis=2)   # [scale x rate]
-    scale_freq = np.mean(cr_avgr, axis=1)   # [scale x frequency]
-    rate_freq = np.mean(cr_avgr, axis=0)    # [rate x frequency]
+    scale_rate, scale_freq, rate_freq = cr_projections(cr, rates)
 
     # Frequency margin offset: real frequency i sits at data-column i + dM
     n_freq_actual = scale_freq.shape[1]
@@ -125,54 +153,51 @@ def plot_cr_projection(cr, rates, scales=None, frequencies=None,
     else:
         dM = 0
 
-    fig, axes = plt.subplots(1, 3, figsize=figsize)
-
-    plots = [
-        {"ax": axes[0], "data": scale_rate, "xlabel": "Rate [Hz]",
-         "ylabel": "Scale [cyc/oct]", "title": "Scale-Rate"},
-        {"ax": axes[1], "data": scale_freq, "xlabel": "Frequency [Hz]",
-         "ylabel": "Scale [cyc/oct]", "title": "Scale-Frequency"},
-        {"ax": axes[2], "data": rate_freq, "xlabel": "Frequency [Hz]",
-         "ylabel": "Rate [Hz]", "title": "Rate-Frequency"},
-    ]
-
-    for p in plots:
-        ax = p["ax"]
-        im = ax.imshow(p["data"], aspect='auto', origin='lower', cmap=cmap)
-        ax.set_xlabel(p["xlabel"])
-        ax.set_ylabel(p["ylabel"])
-        ax.set_title(p["title"])
-        plt.colorbar(im, ax=ax)
+    created = axes is None
+    if created:
+        fig, axes = plt.subplots(1, 3, figsize=figsize)
+    else:
+        axes = np.atleast_1d(axes).ravel()
+        if axes.size != 3:
+            raise ValueError("axes must contain exactly 3 Axes "
+                             "(scale-rate, scale-frequency, rate-frequency).")
+        fig = axes[0].figure
 
     ax1, ax2, ax3 = axes
+    panels = [
+        (ax1, scale_rate, "Rate [Hz]", "Scale [cyc/oct]", "Scale-Rate"),
+        (ax2, scale_freq, "Frequency [Hz]", "Scale [cyc/oct]", "Scale-Frequency"),
+        (ax3, rate_freq, "Frequency [Hz]", "Rate [Hz]", "Rate-Frequency"),
+    ]
+    for ax, data, xlabel, ylabel, title in panels:
+        im = ax.imshow(data, aspect='auto', origin='lower', cmap=cmap)
+        ax.set_xlabel(xlabel)
+        ax.set_ylabel(ylabel)
+        ax.set_title(title)
+        fig.colorbar(im, ax=ax)
 
     # Frequency ticks (x-axis on ax2, ax3), offset into the real-data region
     if frequencies is not None:
         f_idx = np.linspace(0, len(frequencies) - 1, 6).astype(int)
-        f_ticks = f_idx + dM
-        f_labels = [f"{frequencies[i]:.0f}" for i in f_idx]
         for ax in (ax2, ax3):
-            ax.set_xticks(f_ticks)
-            ax.set_xticklabels(f_labels, rotation=45)
+            ax.set_xticks(f_idx + dM)
+            ax.set_xticklabels([f"{frequencies[i]:.0f}" for i in f_idx], rotation=45)
 
-    # Rate ticks: x-axis on ax1, y-axis on ax3 (no margin, rates aren't padded)
-    if rates is not None:
-        r_idx = np.linspace(0, len(rates) - 1, 6).astype(int)
-        r_labels = [f"{rates[i]:.1f}" for i in r_idx]
-        ax1.set_xticks(r_idx)
-        ax1.set_xticklabels(r_labels)
-        ax3.set_yticks(r_idx)
-        ax3.set_yticklabels(r_labels)
+    # Rate ticks: x-axis on ax1, y-axis on ax3 (rates aren't padded)
+    r_idx = np.linspace(0, len(rates) - 1, 6).astype(int)
+    r_labels = [f"{rates[i]:.1f}" for i in r_idx]
+    ax1.set_xticks(r_idx); ax1.set_xticklabels(r_labels)
+    ax3.set_yticks(r_idx); ax3.set_yticklabels(r_labels)
 
-    # Scale ticks: y-axis on ax1, ax2 (no margin, scales aren't padded)
+    # Scale ticks: y-axis on ax1, ax2 (scales aren't padded)
     if scales is not None:
         s_idx = np.linspace(0, len(scales) - 1, 6).astype(int)
         s_labels = [f"{scales[i]:.1f}" for i in s_idx]
         for ax in (ax1, ax2):
-            ax.set_yticks(s_idx)
-            ax.set_yticklabels(s_labels)
+            ax.set_yticks(s_idx); ax.set_yticklabels(s_labels)
 
-    plt.tight_layout()
+    if created:
+        fig.tight_layout()
     return fig, (ax1, ax2, ax3)
 
 

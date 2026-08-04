@@ -227,7 +227,7 @@ def gen_temporal_modulations_rate(rate: float, duration: float = 2, sf: int = 16
     return signal
 
 def gen_spectral_modulations_scale(scale: float, f_min: float = 180, f_max: float = 7040,
-                                   duration: float = 2, sf: int = 16000, num_channels: int = 128,
+                                   duration: float = 2, sf: int = 16000, num_channels: int = 1024,
                                    seed: int = 0) -> np.ndarray:
     """
     Generates a signal containing only spectral modulations at a specified
@@ -235,8 +235,9 @@ def gen_spectral_modulations_scale(scale: float, f_min: float = 180, f_max: floa
 
     The signal is formed by summing log-spaced sinusoidal carriers whose amplitudes
     follow a sinusoidal envelope across the log-frequency axis. Each carrier is given
-    a random starting phase (see note below) so that the resulting audiogram shows
-    the intended horizontal spectral stripes without interference artefacts.
+    a random starting phase, and the carrier grid is deliberately dense (see note
+    below), so that the resulting audiogram shows the intended horizontal spectral
+    stripes without interference artefacts.
 
     :param scale: Spectral modulation scale in cycles/octave.
     :type scale: float
@@ -253,7 +254,10 @@ def gen_spectral_modulations_scale(scale: float, f_min: float = 180, f_max: floa
     :param sf: Sampling frequency in Hz.
     :type sf: int
 
-    :param num_channels: Number of log-spaced carrier frequencies.
+    :param num_channels: Number of log-spaced carrier frequencies. Must be large enough
+        that many carriers fall within each cochlear filter (see note); ~1024 across the
+        default 180-7040 Hz range works well. Values below ~256 leave visible beating
+        artefacts in the low-frequency region of the audiogram.
     :type num_channels: int
 
     :param seed: Seed for the random carrier phases. A fixed value keeps the output
@@ -263,13 +267,16 @@ def gen_spectral_modulations_scale(scale: float, f_min: float = 180, f_max: floa
     :returns: 1-D signal of length ``duration * sf``.
     :rtype: numpy.ndarray
 
-    .. note:: The carriers are given random starting phases rather than all starting
-        in phase at :math:`t=0`. Densely log-spaced carriers fall within each cochlear
-        filter's bandwidth and beat against one another; when they share a common phase
-        origin this beating is coherent and produces a deterministic, frequency-swept
-        interference ("fingerprint") pattern in the audiogram. Randomising the phases
-        decorrelates the beating (approximating the broadband-noise carrier described by
-        Chi et al., 2005) and leaves only the intended horizontal spectral stripes.
+    .. note:: Two design choices work together to suppress interference artefacts.
+        First, each carrier is given a random starting phase (rather than all starting
+        in phase at :math:`t=0`), which prevents coherent onset transients from
+        producing a deterministic, frequency-swept interference ("fingerprint") pattern.
+        Second, the carrier grid is deliberately dense: adjacent log-spaced carriers
+        that fall within the same cochlear filter's bandwidth beat at their frequency
+        difference regardless of phase, so many carriers per filter are needed for those
+        pair-beats to add incoherently and integrate out. Together these approximate the
+        broadband-noise carrier described by Chi et al. (2005) and leave only the
+        intended horizontal spectral stripes.
     """
     t = np.arange(0, duration, 1 / sf)
 
