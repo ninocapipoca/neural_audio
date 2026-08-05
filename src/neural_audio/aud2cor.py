@@ -6,17 +6,12 @@ def corcplxw(z, fout):
     fout.write(data.astype(np.float32).tobytes())
 
 def aud2cor(y: np.ndarray, 
-            octave_shift: int=0, 
-            frame_length: int=4, 
-            sigmoid_factor: float=-2, 
-            time_constant: int=0,
             tp_margin: float=0, # fullness of temporal margin
             sp_margin: float=0, # fullness of spectral margin
             bandpass: int=1,
             rates: np.ndarray=None,
             scales: np.ndarray=None,
-            ch_per_oct: int=None,
-            fname: str=''): 
+            ch_per_oct: int=None): 
     """
     Cortical rate-scale representation (forward transform).
 
@@ -66,18 +61,6 @@ def aud2cor(y: np.ndarray,
 
     # Ensure y is properly formatted
     assert isinstance(y, np.ndarray) and y.ndim == 2, "Input auditory spectrogram y should be a 2-D numpy array."
-
-    # Ensure octave_shift is an integer
-    assert isinstance(octave_shift, int), "The octave_shift parameter should be an integer."
-
-    # Ensure frame_length is a positive integer
-    assert isinstance(frame_length, int) and frame_length > 0, "The frame_length parameter should be a positive integer."
-
-    # Ensure sigmoid_factor is a float or an integer
-    assert isinstance(sigmoid_factor, (int, float)), "The sigmoid_factor parameter should be a float or integer."
-
-    # Ensure time_constant is a non-negative integer
-    assert isinstance(time_constant, int) and time_constant >= 0, "The time_constant parameter should be a non-negative integer."
 
     # Ensure tp_margin and sp_margin are floats or integers within [0, 1]
     assert isinstance(tp_margin, (int, float)), "The tp_margin parameter should be a float or integer."
@@ -157,16 +140,6 @@ def aud2cor(y: np.ndarray,
     # --- Output array ---
     cr = np.zeros((num_scales, num_rates * 2, N + 2 * dN, M + 2 * dM), dtype=complex)
 
-    # --- Open output file ---
-    write_file = len(fname) > 0
-    if write_file:
-        fout = open(fname, 'wb')
-        header = np.array(
-            [frame_length, time_constant, sigmoid_factor, octave_shift] + [num_scales, num_rates] + list(scales) + list(rates) + [N, M, tp_margin, sp_margin],
-            dtype=np.float32
-        )
-        fout.write(header.tobytes())
-
     # ------------------------------------------------------------------ #
     # Main loop: rate × direction × scale                                #
     # ------------------------------------------------------------------ #
@@ -205,10 +178,6 @@ def aud2cor(y: np.ndarray,
                 col = rdx + (num_rates if sgn == 1 else 0)
                 cr[sdx, col, :, :] = z
 
-                if write_file:
-                    corcplxw(z, fout)
-    if write_file:
-        fout.close()
 
 
     return cr

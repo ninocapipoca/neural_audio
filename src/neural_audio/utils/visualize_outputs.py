@@ -16,7 +16,7 @@ def plot_spectrogram(matrix: np.ndarray,
     are log-spaced. ``pcolormesh`` is used rather than ``imshow`` so that linearly-spaced FFT bins
     can be mapped onto this log-scaled axis correctly.
 
-    This function draws onto the *current* matplotlib axes and does not create a new figure or call
+    This function draws onto the current matplotlib axes and does not create a new figure or call
     ``plt.show()`` itself, so it can be used with ``plt.subplot`` to place multiple spectrograms side
     by side or stacked, e.g.:
 
@@ -85,7 +85,7 @@ def cr_projections(cr, rates):
     :param cr: 4-D cortical output, shape (num_scales, num_rates*2, num_time, num_freq).
     :type cr: numpy.ndarray
     :param rates: Rate vector used in aud2cor (length = num_rates, i.e. half of cr.shape[1]).
-    :type rates: array-like
+    :type rates: np.ndarray
 
     :returns: Tuple ``(scale_rate, scale_freq, rate_freq)`` of 2-D arrays.
     :rtype: tuple
@@ -96,29 +96,25 @@ def cr_projections(cr, rates):
     return cr_avgr.mean(2), cr_avgr.mean(1), cr_avgr.mean(0)
 
 
-def plot_cr_projection(cr, rates, scales=None, frequencies=None,
-                       cmap="viridis", figsize=(12, 4), axes=None):
+def plot_cr_projection(cr, rates, scales=None, frequencies=None, figsize=(12, 4), axes=None):
     """
-    Plot 2D projections (scale-rate, scale-frequency, rate-frequency)
-    of a cortical representation.
+    Plots 2D projections (scale-rate, scale-frequency, rate-frequency) of a cortical representation produced by `aud2cor`, with time averaged out.
 
     :param cr: 4-D cortical output, shape (num_scales, num_rates*2, num_time, num_freq).
         num_time and num_freq may include zero/wrap-around margins added by aud2cor's
-        tp_margin / sp_margin (no cropping is done here; margin columns/rows are shown
-        but left unlabeled).
+        tp_margin / sp_margin (note that margin columns/rows are shown
+        but left unlabeled since they have no physical meaning).
     :type cr: numpy.ndarray
     :param rates: Rate vector used in aud2cor (length = num_rates, i.e. half of cr.shape[1]).
-    :type rates: array-like
+    :type rates: np.ndarray
     :param scales: Scale vector used in aud2cor (for real tick labels). If None, the axis
         shows the index.
-    :type scales: array-like, optional
+    :type scales: np.ndarray, optional
     :param frequencies: Characteristic frequencies from wav2aud (for real tick labels). If
         None, the axis shows the index. Length is expected to be <= cr.shape[3]; if cr's
         frequency axis is wider (because sp_margin > 0 was used in aud2cor), the extra
         margin columns are included in the plot but left unlabeled.
-    :type frequencies: array-like, optional
-    :param cmap: Matplotlib colormap name.
-    :type cmap: str, optional, default='viridis'
+    :type frequencies: np.ndarray, optional
     :param figsize: Figure size, used only when a new figure is created (``axes=None``).
     :type figsize: tuple, optional, default=(12, 4)
     :param axes: Optional sequence of exactly 3 existing axes to draw the
@@ -170,7 +166,7 @@ def plot_cr_projection(cr, rates, scales=None, frequencies=None,
         (ax3, rate_freq, "Frequency [Hz]", "Rate [Hz]", "Rate-Frequency"),
     ]
     for ax, data, xlabel, ylabel, title in panels:
-        im = ax.imshow(data, aspect='auto', origin='lower', cmap=cmap)
+        im = ax.imshow(data, aspect='auto', origin='lower', cmap="viridis")
         ax.set_xlabel(xlabel)
         ax.set_ylabel(ylabel)
         ax.set_title(title)
@@ -202,52 +198,57 @@ def plot_cr_projection(cr, rates, scales=None, frequencies=None,
 
 
 def plot_cr_temporal(cr, rates, scales=None, frequencies=None, time_points=None,
-                     cmap="viridis", figsize=(15, 4)):
-    """Plot time-resolved projections (rate-time, scale-time, frequency-time)
-    of a cortical representation.
+                     figsize=(15, 4)):
+    """Plots time-resolved projections (rate-time, scale-time, frequency-time) of a cortical representation produced by `aud2cor`.
 
-    :func:`plot_cr_projection` collapses the time axis and therefore shows only the
-    *time-averaged* modulation content, hiding how the cortical energy evolves over the
-    course of the stimulus. This function instead keeps **time on the horizontal axis**
-    and collapses the two axes that are not being examined, giving three complementary
-    time-resolved views:
+    Rather than collapsing the time axis as in :func:`plot_cr_projection`, this function instead keeps time on the x-axis
+    and collapses the two axes that are not being examined, producing three time-resolved views:
 
-    - **Rate-Time**: how temporal-modulation (rate) energy changes over time
+    - Rate-Time: how temporal-modulation (rate) energy changes over time
       (averaged over scale and frequency).
-    - **Scale-Time**: how spectral-modulation (scale) energy changes over time
+    - Scale-Time: how spectral-modulation (scale) energy changes over time
       (averaged over rate and frequency).
-    - **Frequency-Time**: how per-channel energy changes over time
+    - Frequency-Time: how per-channel energy changes over time
       (averaged over scale and rate).
 
-    Design choices:
+    The magnitude ``|cr|`` is used, since it acts as a strength-of-match measure for a pair
+    (scale, rate), essentially quantifying how much the signal is acting like (scale, rate).
 
-    - The **magnitude** ``|cr|`` is used. ``aud2cor`` returns a complex (analytic) output;
-      its magnitude is the modulation *envelope*, which is the interpretable, non-oscillating
-      quantity to track over time (the phase is discussed in the tutorial).
-    - The two sweep directions (upward/downward) are **averaged** together, matching
-      :func:`plot_cr_projection`, so the two functions can be read side by side. Pass a
-      single-direction slice of ``cr`` if you want to inspect one direction on its own.
+    By default, ``cr`` is expected to contain both sweep directions (``cr.shape[1] == 2*len(rates)``),
+    and the two directions are averaged together, matching
+    :func:`plot_cr_projection` for comparability. To inspect a single direction instead, an appropriate
+    slice of the cortical representation can be passed in, e.g:
 
-    :param cr: 4-D cortical output, shape ``(num_scales, num_rates*2, num_time, num_freq)``.
+    .. code-block:: python
+    
+            directionA = cr[:, :len(rates)]
+            directionB = cr[:, len(rates):]
+            plot_cr_temporal(directionA, rates, scales, frequencies, time_points)
+
+    Here 'upwards' or 'downwards' are not explicitly assigned as it depends on the sign convention of 
+    the rate. The naming is arbitrary; the importance lies in the filters being able to capture both
+    modulation directions.
+
+
+    :param cr: 4-D cortical output. Either both directions, shape
+        ``(num_scales, num_rates*2, num_time, num_freq)`` (averaged together), or a single
+        direction, shape ``(num_scales, num_rates, num_time, num_freq)`` (used as-is).
         ``num_time`` / ``num_freq`` may include the margins added by ``aud2cor``'s
         ``tp_margin`` / ``sp_margin``; margin rows/columns are shown but left unlabeled.
     :type cr: numpy.ndarray
-    :param rates: Rate vector used in ``aud2cor`` (length ``= num_rates``, i.e. half of
-        ``cr.shape[1]``).
-    :type rates: array-like
+    :param rates: Rate vector used in ``aud2cor`` (length ``= num_rates``).
+    :type rates: np.ndarray
     :param scales: Scale vector used in ``aud2cor`` (for real y-tick labels on the
         Scale-Time panel). If ``None``, the axis shows the channel index.
-    :type scales: array-like, optional
+    :type scales: np.ndarray, optional
     :param frequencies: Characteristic frequencies from ``wav2aud`` (for real y-tick labels
         on the Frequency-Time panel). If ``None``, the axis shows the channel index.
-    :type frequencies: array-like, optional
+    :type frequencies: np.ndarray, optional
     :param time_points: Time values (in seconds) for the *unpadded* time frames, e.g. the
         ``time_points`` returned by ``wav2aud``. Used for real x-tick labels; when shorter
         than ``cr``'s time axis (because ``tp_margin > 0`` was used) the labels are offset
         into the real-data region. If ``None``, the axis shows the frame index.
-    :type time_points: array-like, optional
-    :param cmap: Matplotlib colormap name.
-    :type cmap: str, optional, default='viridis'
+    :type time_points: np.ndarray, optional
     :param figsize: Figure size passed to ``plt.subplots``.
     :type figsize: tuple, optional, default=(15, 4)
 
@@ -256,15 +257,21 @@ def plot_cr_temporal(cr, rates, scales=None, frequencies=None, time_points=None,
     """
     if cr.ndim != 4:
         raise ValueError("cr must be a 4-D array with shape (scale, rate, time, frequency).")
-    if cr.shape[1] != 2 * len(rates):
-        raise ValueError(
-            f"cr.shape[1] ({cr.shape[1]}) must equal 2*len(rates) ({2*len(rates)})."
-        )
 
     n_rate = len(rates)
 
-    # magnitude of the analytic output, averaged over the two sweep directions
-    mag = (np.abs(cr[:, :n_rate, :, :]) + np.abs(cr[:, n_rate:2*n_rate, :, :])) / 2  # [scale, rate, time, freq]
+    if cr.shape[1] == 2 * n_rate:
+        # both sweep directions present: magnitude of the analytic output,
+        # averaged over the two sweep directions
+        mag = (np.abs(cr[:, :n_rate, :, :]) + np.abs(cr[:, n_rate:2*n_rate, :, :])) / 2  # [scale, rate, time, freq]
+    elif cr.shape[1] == n_rate:
+        # single direction already selected by the caller: use as-is, no averaging
+        mag = np.abs(cr)  # [scale, rate, time, freq]
+    else:
+        raise ValueError(
+            f"cr.shape[1] ({cr.shape[1]}) must equal either len(rates) ({n_rate}), "
+            f"for a single sweep direction, or 2*len(rates) ({2*n_rate}), for both directions."
+        )
 
     rate_time = mag.mean(axis=(0, 3))          # [rate, time]
     scale_time = mag.mean(axis=(1, 3))         # [scale, time]
@@ -282,7 +289,7 @@ def plot_cr_temporal(cr, rates, scales=None, frequencies=None, time_points=None,
 
     for p in plots:
         ax = p["ax"]
-        im = ax.imshow(p["data"], aspect='auto', origin='lower', cmap=cmap)
+        im = ax.imshow(p["data"], aspect='auto', origin='lower', cmap="viridis")
         ax.set_xlabel("Time [s]" if time_points is not None else "Time [frame]")
         ax.set_ylabel(p["ylabel"])
         ax.set_title(p["title"])
