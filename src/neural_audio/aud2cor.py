@@ -6,6 +6,7 @@ def corcplxw(z, fout):
     fout.write(data.astype(np.float32).tobytes())
 
 def aud2cor(y: np.ndarray, 
+            frame_length: int=4,
             tp_margin: float=0, # fullness of temporal margin
             sp_margin: float=0, # fullness of spectral margin
             bandpass: int=1,
@@ -15,7 +16,7 @@ def aud2cor(y: np.ndarray,
     """
     Cortical rate-scale representation (forward transform).
 
-    :param y: The auditory spectrogram of shape [:math:`[N,M]`], where :math:`N=128` is the number of frequency channels and :math:`M=ceil(len(x) / frame_length)` is the number of time-frames.
+    :param y: The auditory spectrogram, i.e. the output of ``wav2aud``, of shape :math:`[N, M]`, where :math:`N` is the number of time-frames and :math:`M=128` is the number of frequency channels. Pass it in directly, exactly as returned by ``wav2aud`` (no transpose), matching the MATLAB NSL toolbox convention.
     :type y: numpy.ndarray
 
     :param tp_margin: Fullness of the temporal margin; any real value in [0,1].
@@ -49,18 +50,20 @@ def aud2cor(y: np.ndarray,
         will not necessarily match the default.
     :type ch_per_oct: int, optional, default=None
 
-    :param fname: Name of binary file to save to disk. If an empty string, the result will not be saved.
-    :type fname: str, optional, default=''
+    .. note:: The output of ``wav2aud`` already has shape :math:`[N, M]` = (time-frames, frequency channels) and is passed to ``aud2cor`` directly, with no transpose. This mirrors the MATLAB NSL toolbox, where ``aud2cor`` takes the ``wav2aud`` output as-is.
 
-    .. note:: If using the output of `wav2aud` you need to transpose the audiogram to get shape (channels, time points) rather than (time points, channels)
-
-    :returns: `cr` - Cortical representation (numpy.ndarray), shape (num_scales, num_rates*2, N+2*dN, M+2*dM)
+    :returns: `cr` - Cortical representation (numpy.ndarray), a 4-D complex array of shape
+        (num_scales, num_rates*2, N + 2*dN, M + 2*dM), i.e. (scale, rate*2, time, frequency).
+        The rate axis holds both sweep directions (hence num_rates*2), and the time/frequency axes
+        include any margins added via ``tp_margin`` / ``sp_margin``. This matches the MATLAB NSL
+        toolbox output ordering [scale, rate*2, time, frequency].
     """
 
     # --- Input validation ---
 
-    # Ensure y is properly formatted
     assert isinstance(y, np.ndarray) and y.ndim == 2, "Input auditory spectrogram y should be a 2-D numpy array."
+
+    assert isinstance(frame_length, int) and frame_length > 0, "The frame_length parameter should be a positive integer."
 
     # Ensure tp_margin and sp_margin are floats or integers within [0, 1]
     assert isinstance(tp_margin, (int, float)), "The tp_margin parameter should be a float or integer."
@@ -81,9 +84,6 @@ def aud2cor(y: np.ndarray,
     # Ensure ch_per_oct, if supplied, is a positive integer
     if ch_per_oct is not None:
         assert isinstance(ch_per_oct, int) and ch_per_oct > 0, "The ch_per_oct parameter should be a positive integer, if supplied."
-
-    # Ensure fname is a string
-    assert isinstance(fname, str), "The fname parameter should be a string."
 
     # Check margins are within allowed range
     if not (0 <= tp_margin <= 1):

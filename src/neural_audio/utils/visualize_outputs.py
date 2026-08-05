@@ -198,7 +198,7 @@ def plot_cr_projection(cr, rates, scales=None, frequencies=None, figsize=(12, 4)
 
 
 def plot_cr_temporal(cr, rates, scales=None, frequencies=None, time_points=None,
-                     figsize=(15, 4)):
+                     figsize=(15, 4), axes=None):
     """Plots time-resolved projections (rate-time, scale-time, frequency-time) of a cortical representation produced by `aud2cor`.
 
     Rather than collapsing the time axis as in :func:`plot_cr_projection`, this function instead keeps time on the x-axis
@@ -249,10 +249,15 @@ def plot_cr_temporal(cr, rates, scales=None, frequencies=None, time_points=None,
         than ``cr``'s time axis (because ``tp_margin > 0`` was used) the labels are offset
         into the real-data region. If ``None``, the axis shows the frame index.
     :type time_points: np.ndarray, optional
-    :param figsize: Figure size passed to ``plt.subplots``.
+    :param figsize: Figure size, used only when a new figure is created (``axes=None``).
     :type figsize: tuple, optional, default=(15, 4)
+    :param axes: Optional sequence of exactly 3 existing axes to draw the
+        (rate-time, scale-time, frequency-time) panels into -- e.g. one row of a
+        larger subplot grid, so several representations can be compared in a single figure.
+        If None, a new 1x3 figure is created.
+    :type axes: sequence of matplotlib.axes.Axes, optional
 
-    :returns: The created figure and its three axes ``(fig, (ax_rate, ax_scale, ax_freq))``.
+    :returns: The figure and its three axes ``(fig, (ax_rate, ax_scale, ax_freq))``.
     :rtype: tuple
     """
     if cr.ndim != 4:
@@ -279,7 +284,15 @@ def plot_cr_temporal(cr, rates, scales=None, frequencies=None, time_points=None,
 
     n_time_actual = mag.shape[2]
 
-    fig, axes = plt.subplots(1, 3, figsize=figsize)
+    created = axes is None
+    if created:
+        fig, axes = plt.subplots(1, 3, figsize=figsize)
+    else:
+        axes = np.atleast_1d(axes).ravel()
+        if axes.size != 3:
+            raise ValueError("axes must contain exactly 3 Axes "
+                             "(rate-time, scale-time, frequency-time).")
+        fig = axes[0].figure
 
     plots = [
         {"ax": axes[0], "data": rate_time, "ylabel": "Rate [Hz]", "title": "Rate-Time"},
@@ -293,7 +306,7 @@ def plot_cr_temporal(cr, rates, scales=None, frequencies=None, time_points=None,
         ax.set_xlabel("Time [s]" if time_points is not None else "Time [frame]")
         ax.set_ylabel(p["ylabel"])
         ax.set_title(p["title"])
-        plt.colorbar(im, ax=ax)
+        fig.colorbar(im, ax=ax)
 
     ax_rate, ax_scale, ax_freq = axes
 
@@ -336,7 +349,8 @@ def plot_cr_temporal(cr, rates, scales=None, frequencies=None, time_points=None,
         ax_freq.set_yticks(f_idx + dM)
         ax_freq.set_yticklabels([f"{frequencies[i]:.0f}" for i in f_idx])
 
-    plt.tight_layout()
+    if created:
+        fig.tight_layout()
     return fig, (ax_rate, ax_scale, ax_freq)
 
 
