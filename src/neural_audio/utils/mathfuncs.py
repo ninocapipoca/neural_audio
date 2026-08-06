@@ -1,4 +1,5 @@
 import numpy as np
+import warnings
 
 def sigmoid(y: np.ndarray, fac:int) -> np.ndarray:
     """
@@ -124,8 +125,9 @@ def gen_ripple(rate: float,
                f_min: float = 180, 
                f_max: float = 7040, 
                num_channels: int = 128,
-               mod_depth: float = 0.9, 
-               phase: float = 0.0) -> np.ndarray:
+               mod_depth: float = 0.9,
+               phase: float = 0.0,
+               seed: int = 0) -> np.ndarray:
     r"""
     Generates a sinusoidal ripple stimulus following the description in Chi et al. (2005), caption of Fig. 1(b):
 
@@ -135,10 +137,14 @@ def gen_ripple(rate: float,
     w (rate) is the ripple velocity in Hz, and Omega (scale) is the ripple density
     in cycles/octave.
 
-    A ripple stimulus (the signal) is made up of many pure sinusoids, log-spaced in frequency between `f_min` and `f_max`, 
+    A ripple stimulus (the signal) is made up of many pure sinusoids, log-spaced in frequency between `f_min` and `f_max`,
     which are each amplitude-modulated by S(t, x) evaluated at their own octave position x, then summed.
     Here, S(t,x) is referred to as the ripple function, which is not the same as the signal
     itself; it only describes how the signal changes across time and frequency.
+
+    Each carrier is given a random starting phase, which approximates the broadband-noise
+    carrier described by Chi et al. (2005) and leaves only the intended ripple pattern
+    (see note below).
 
     :param rate: Ripple velocity (w), in Hz. Controls how quickly the stimulus modulations happen in time. 
         Sign controls sweep direction (up/down).
@@ -167,12 +173,24 @@ def gen_ripple(rate: float,
         stimulus are (i.e, the contrast).
     :type mod_depth: float, optional, default=0.9
 
-    :param phase: Ripple phase (Phi), in radians. Shifts ripple curve, changing where the 
-        peaks and troughs sit relative to the frequency channels.
+    :param phase: Ripple phase (Phi), in radians. Shifts ripple curve, changing where the
+        peaks and troughs sit relative to the frequency channels. This applies to the ripple
+        envelope, and is distinct from the random per-carrier phases described below.
     :type phase: float, optional, default=0
+
+    :param seed: Seed for the random carrier phases. A fixed value keeps the output
+        reproducible; pass a different value for an independent realisation.
+    :type seed: int, optional, default=0
 
     :returns: 1D signal of shape (duration*sf,).
     :rtype: numpy.ndarray
+
+    .. note:: Each carrier is given a random starting phase rather than all starting in phase
+        at :math:`t=0`. Carriers that all cohere at :math:`t=0` produce a deterministic,
+        frequency-swept interference ("fingerprint") pattern that is visible in the audiogram
+        as curved streaks near the onset, on top of the intended ripple. Randomising the
+        starting phases removes that pattern without affecting the rate and scale of the
+        ripple itself.
 
     .. rubric:: References
 
@@ -187,17 +205,105 @@ def gen_ripple(rate: float,
     freqs = np.geomspace(f_min, f_max, num_channels)
     rel_pos = np.log2(freqs / f_min) # relative position in octaves, 0 at f_min
 
-    signal = np.zeros_like(t)
-    for f, pos in zip(freqs, rel_pos):
-        envelope = 1 + mod_depth * np.sin(2 * np.pi * (rate * t + scale * pos) + phase)
-        signal += envelope * np.sin(2 * np.pi * f * t)
+    # random per-carrier phases so carriers do not all cohere at t=0 (see note)
+    rng = np.random.default_rng(seed)
+    carrier_phases = rng.uniform(0, 2 * np.pi, size=num_channels)
 
-    #signal /= num_channels
+    signal = np.zeros_like(t)
+    for f, pos, carrier_phase in zip(freqs, rel_pos, carrier_phases):
+        envelope = 1 + mod_depth * np.sin(2 * np.pi * (rate * t + scale * pos) + phase)
+        signal += envelope * np.sin(2 * np.pi * f * t + carrier_phase)
+
     return signal
 
-def gen_temporal_modulations_rate(rate: float, duration: float = 2, sf: int = 16000) -> np.ndarray:
+def gen_temporal_modulations_rate(rate: float, duration: float = 2, sf: int = 16000,
+                                  carrier_freq: float = 1000, depth: float = 1.0, ramp: bool = False, 
+                                  ramp_frac: float = 0.05, clip=True) -> np.ndarray:
     """
     Generates a signal containing only temporal modulations at a specified
+    modulation rate.
+
+    A pure-tone carrier is amplitude-modulated by a sinusoidal envelope at
+    ``rate`` Hz. Because the carrier is a single frequency, the modulation
+    appears in one horizontal band of the audiogram (the channels tuned near
+    ``carrier_freq``). The sinusoidal envelope produces smooth temporal
+    modulation without the sharp broadband onsets of an impulse train.
+
+    :param rate: Temporal modulation rate in Hz.
+    :type rate: float
+
+    :param duration: Signal duration in seconds.
+    :type duration: float, optional
+
+    :param sf: Sampling frequency in Hz.
+    :type sf: int, optional
+
+    :param carrier_freq: Carrier tone frequency in Hz. Should fall within the
+        range the cochlear filterbank covers (roughly 180-7040 Hz at the
+        default sampling rate). Default is 1kHz.
+    :type carrier_freq: float, optional
+
+    :param depth: Modulation depth in [0, 1]. At 1.0 the envelope reaches zero
+        at its troughs (100% modulation); at 0.0 the carrier is unmodulated.
+    :type depth: float, optional
+
+    :param ramp: Whether to use a Hann window to reduce edge artefacts. Note that
+        this adds some slow spectral modulation, so this is `False` by default.
+    :type ramp: bool, optional
+
+    :param ramp_frac: Fraction of total length to taper (use as a ramp) at each end
+        of the original signal. A small value is recommended (0.05 by default), and the maximum possible value is
+        0.5, which applies the Hann window to the entire signal.
+    :type ramp_frac: float, optional
+
+    :param clip: Whether to clip the carrier frequency if it falls outside the approximate default filterbank range. True by
+        default, but can be toggled to allow compatibility with other filterbanks.
+    :type clip: bool, optional
+
+    :returns: 1-D signal of length ``int(duration * sf)``.
+    :rtype: numpy.ndarray
+    """
+
+    if not 0 <= ramp_frac <= 0.5:
+        raise ValueError("ramp_frac parameter must be between 0 and 0.5")
+
+    if not 0 <= depth <= 1:
+        raise ValueError("depth parameter must be between 0 and 1")
+
+    if not 180 <= carrier_freq <= 7040:
+        warnings.warn(f"carrier_freq={carrier_freq} Hz is outside or close to the edges of the default filterbank range (approx 180-7040 Hz)")
+        if clip:
+            carrier_freq = np.clip(carrier_freq, 180, 7040)
+            warnings.warn(f"carrier_freq= clipped to {carrier_freq}")
+
+    if carrier_freq < 8 * rate: 
+        # a rough baseline to avoid artefacts
+        warnings.warn(f"carrier_freq={carrier_freq} Hz is not much greater than rate={rate} Hz; envelope may not be well-defined (beating). Try {carrier_freq*8}Hz")
+
+    t = np.arange(0, duration, 1 / sf)
+
+    # pure-tone carrier at a single frequency
+    carrier = np.sin(2 * np.pi * carrier_freq * t)
+
+    # sinusoidal amplitude envelope at the modulation rate.
+    # cosine starts at a peak; shifted so the envelope stays in [1-depth, 1].
+    envelope = 1 - depth * (1 - np.cos(2 * np.pi * rate * t)) / 2
+
+    if ramp:
+        ramp_len = int(ramp_frac * len(t))
+        ramp_func = np.hanning(2 * ramp_len)
+        window = np.ones(len(t))
+        window[:ramp_len] = ramp_func[:ramp_len]
+        window[-ramp_len:] = ramp_func[ramp_len:]
+        envelope = envelope * window
+
+    signal = envelope * carrier
+
+    return signal, envelope
+
+def gen_temporal_bursts_rate(rate: float, duration: float = 2, sf: int = 16000) -> np.ndarray:
+    """
+    Generates a signal containing bursts at a specified
     modulation rate.
 
     The signal consists of evenly spaced impulses, with ``rate`` bursts per
