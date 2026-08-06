@@ -197,19 +197,17 @@ def plot_cr_projection(cr, rates, scales=None, frequencies=None, figsize=(12, 4)
     return fig, (ax1, ax2, ax3)
 
 
-def plot_cr_temporal(cr, rates, scales=None, frequencies=None, time_points=None,
-                     figsize=(15, 4), axes=None):
-    """Plots time-resolved projections (rate-time, scale-time, frequency-time) of a cortical representation produced by `aud2cor`.
+def plot_cr_temporal(cr, rates, scales=None, time_points=None,
+                     figsize=(10, 4), axes=None):
+    """Plots time-resolved projections (rate-time, scale-time) of a cortical representation produced by `aud2cor`.
 
     Rather than collapsing the time axis as in :func:`plot_cr_projection`, this function instead keeps time on the x-axis
-    and collapses the two axes that are not being examined, producing three time-resolved views:
+    and collapses the two axes that are not being examined, producing two time-resolved views:
 
     - Rate-Time: how temporal-modulation (rate) energy changes over time
       (averaged over scale and frequency).
     - Scale-Time: how spectral-modulation (scale) energy changes over time
       (averaged over rate and frequency).
-    - Frequency-Time: how per-channel energy changes over time
-      (averaged over scale and rate).
 
     The magnitude ``|cr|`` is used, since it acts as a strength-of-match measure for a pair
     (scale, rate), essentially quantifying how much the signal is acting like (scale, rate).
@@ -220,12 +218,12 @@ def plot_cr_temporal(cr, rates, scales=None, frequencies=None, time_points=None,
     slice of the cortical representation can be passed in, e.g:
 
     .. code-block:: python
-    
+
             directionA = cr[:, :len(rates)]
             directionB = cr[:, len(rates):]
-            plot_cr_temporal(directionA, rates, scales, frequencies, time_points)
+            plot_cr_temporal(directionA, rates, scales, time_points)
 
-    Here 'upwards' or 'downwards' are not explicitly assigned as it depends on the sign convention of 
+    Here 'upwards' or 'downwards' are not explicitly assigned as it depends on the sign convention of
     the rate. The naming is arbitrary; the importance lies in the filters being able to capture both
     modulation directions.
 
@@ -233,31 +231,28 @@ def plot_cr_temporal(cr, rates, scales=None, frequencies=None, time_points=None,
     :param cr: 4-D cortical output. Either both directions, shape
         ``(num_scales, num_rates*2, num_time, num_freq)`` (averaged together), or a single
         direction, shape ``(num_scales, num_rates, num_time, num_freq)`` (used as-is).
-        ``num_time`` / ``num_freq`` may include the margins added by ``aud2cor``'s
-        ``tp_margin`` / ``sp_margin``; margin rows/columns are shown but left unlabeled.
+        ``num_time`` may include the margins added by ``aud2cor``'s
+        ``tp_margin``; margin columns are shown but left unlabeled.
     :type cr: numpy.ndarray
     :param rates: Rate vector used in ``aud2cor`` (length ``= num_rates``).
     :type rates: np.ndarray
     :param scales: Scale vector used in ``aud2cor`` (for real y-tick labels on the
         Scale-Time panel). If ``None``, the axis shows the channel index.
     :type scales: np.ndarray, optional
-    :param frequencies: Characteristic frequencies from ``wav2aud`` (for real y-tick labels
-        on the Frequency-Time panel). If ``None``, the axis shows the channel index.
-    :type frequencies: np.ndarray, optional
     :param time_points: Time values (in seconds) for the *unpadded* time frames, e.g. the
         ``time_points`` returned by ``wav2aud``. Used for real x-tick labels; when shorter
         than ``cr``'s time axis (because ``tp_margin > 0`` was used) the labels are offset
         into the real-data region. If ``None``, the axis shows the frame index.
     :type time_points: np.ndarray, optional
     :param figsize: Figure size, used only when a new figure is created (``axes=None``).
-    :type figsize: tuple, optional, default=(15, 4)
-    :param axes: Optional sequence of exactly 3 existing axes to draw the
-        (rate-time, scale-time, frequency-time) panels into -- e.g. one row of a
+    :type figsize: tuple, optional, default=(10, 4)
+    :param axes: Optional sequence of exactly 2 existing axes to draw the
+        (rate-time, scale-time) panels into -- e.g. one row of a
         larger subplot grid, so several representations can be compared in a single figure.
-        If None, a new 1x3 figure is created.
+        If None, a new 1x2 figure is created.
     :type axes: sequence of matplotlib.axes.Axes, optional
 
-    :returns: The figure and its three axes ``(fig, (ax_rate, ax_scale, ax_freq))``.
+    :returns: The figure and its two axes ``(fig, (ax_rate, ax_scale))``.
     :rtype: tuple
     """
     if cr.ndim != 4:
@@ -280,24 +275,22 @@ def plot_cr_temporal(cr, rates, scales=None, frequencies=None, time_points=None,
 
     rate_time = mag.mean(axis=(0, 3))          # [rate, time]
     scale_time = mag.mean(axis=(1, 3))         # [scale, time]
-    freq_time = mag.mean(axis=(0, 1)).T        # [freq, time]
 
     n_time_actual = mag.shape[2]
 
     created = axes is None
     if created:
-        fig, axes = plt.subplots(1, 3, figsize=figsize)
+        fig, axes = plt.subplots(1, 2, figsize=figsize)
     else:
         axes = np.atleast_1d(axes).ravel()
-        if axes.size != 3:
-            raise ValueError("axes must contain exactly 3 Axes "
-                             "(rate-time, scale-time, frequency-time).")
+        if axes.size != 2:
+            raise ValueError("axes must contain exactly 2 Axes "
+                             "(rate-time, scale-time).")
         fig = axes[0].figure
 
     plots = [
         {"ax": axes[0], "data": rate_time, "ylabel": "Rate [Hz]", "title": "Rate-Time"},
         {"ax": axes[1], "data": scale_time, "ylabel": "Scale [cyc/oct]", "title": "Scale-Time"},
-        {"ax": axes[2], "data": freq_time, "ylabel": "Frequency [Hz]", "title": "Frequency-Time"},
     ]
 
     for p in plots:
@@ -308,7 +301,7 @@ def plot_cr_temporal(cr, rates, scales=None, frequencies=None, time_points=None,
         ax.set_title(p["title"])
         fig.colorbar(im, ax=ax)
 
-    ax_rate, ax_scale, ax_freq = axes
+    ax_rate, ax_scale = axes
 
     # Time ticks (x-axis on all panels), offset into the real-data region if margins exist
     if time_points is not None:
@@ -336,22 +329,9 @@ def plot_cr_temporal(cr, rates, scales=None, frequencies=None, time_points=None,
         ax_scale.set_yticks(s_idx)
         ax_scale.set_yticklabels([f"{scales[i]:.1f}" for i in s_idx])
 
-    # Frequency ticks (y-axis on ax_freq), offset into the real-data region
-    if frequencies is not None:
-        n_freq_actual = freq_time.shape[0]
-        dM = (n_freq_actual - len(frequencies)) // 2
-        if dM < 0:
-            raise ValueError(
-                f"len(frequencies) ({len(frequencies)}) exceeds cr's frequency dimension "
-                f"({n_freq_actual}); frequencies must correspond to the unpadded axis."
-            )
-        f_idx = np.linspace(0, len(frequencies) - 1, 6).astype(int)
-        ax_freq.set_yticks(f_idx + dM)
-        ax_freq.set_yticklabels([f"{frequencies[i]:.0f}" for i in f_idx])
-
     if created:
         fig.tight_layout()
-    return fig, (ax_rate, ax_scale, ax_freq)
+    return fig, (ax_rate, ax_scale)
 
 
 def save_wav(signal: np.ndarray, sf: int, filepath: Path) -> None:

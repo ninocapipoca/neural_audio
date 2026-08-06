@@ -226,73 +226,45 @@ def gen_temporal_modulations_rate(rate: float, duration: float = 2, sf: int = 16
 
     return signal
 
-def gen_spectral_modulations_scale(scale: float, f_min: float = 180, f_max: float = 7040,
-                                   duration: float = 2, sf: int = 16000, num_channels: int = 1024,
-                                   seed: int = 0) -> np.ndarray:
+def gen_spectral_modulations_scale(scale: float, f_min: int = 180, f_max: int = 7040,
+                                   duration: int = 2, sf: int = 16000) -> np.ndarray:
     """
-    Generates a signal containing only spectral modulations at a specified
-    spectral modulation scale.
+    Generates a signal with only spectral modulations at a given spectral modulation scale.
 
-    The signal is formed by summing log-spaced sinusoidal carriers whose amplitudes
-    follow a sinusoidal envelope across the log-frequency axis. Each carrier is given
-    a random starting phase, and the carrier grid is deliberately dense (see note
-    below), so that the resulting audiogram shows the intended horizontal spectral
-    stripes without interference artefacts.
+    This is a thin wrapper around :func:`gen_spectral_modulations`: the ``scale`` (in
+    cycles/octave) sets how many log-spaced sinusoidal carriers are placed per octave across
+    the ``[f_min, f_max]`` range, namely ``num_sinusoids = round(scale * n_octaves) + 1``.
+    A larger ``scale`` therefore packs the carriers more densely, giving more closely spaced
+    spectral stripes (faster variation across frequency). As with ``gen_spectral_modulations``,
+    the signal is constant in time.
 
-    :param scale: Spectral modulation scale in cycles/octave.
+    :param scale: Spectral modulation scale in cycles/octave. Sets the carrier density
+        (carriers per octave).
     :type scale: float
 
-    :param f_min: Lowest carrier frequency (Hz).
-    :type f_min: float
+    :param f_min: The minimum frequency present in the signal, in Hz
+    :type f_min: int, optional, default=180
 
-    :param f_max: Highest carrier frequency (Hz).
-    :type f_max: float
+    :param f_max: The maximum frequency present in the signal, in Hz
+    :type f_max: int, optional, default=7040
 
-    :param duration: Signal duration in seconds.
-    :type duration: float
+    :param duration: Duration of the signal, in seconds
+    :type duration: int, optional, default=2
 
-    :param sf: Sampling frequency in Hz.
-    :type sf: int
+    :param sf: Sampling frequency in Hz, used in the calculation of the number of time points (``duration * sf``)
+        and hence defines the signal's temporal resolution
+    :type sf: int, optional, default=16000
 
-    :param num_channels: Number of log-spaced carrier frequencies. Must be large enough
-        that many carriers fall within each cochlear filter (see note); ~1024 across the
-        default 180-7040 Hz range works well. Values below ~256 leave visible beating
-        artefacts in the low-frequency region of the audiogram.
-    :type num_channels: int
-
-    :param seed: Seed for the random carrier phases. A fixed value keeps the output
-        reproducible; pass a different value for an independent realisation.
-    :type seed: int, optional, default=0
-
-    :returns: 1-D signal of length ``duration * sf``.
+    :returns: 1D signal of shape (duration*sf,); for example, if your sampling frequency is 16kHz and you have a duration of
+        2 seconds, your output signal will have length 32kHz.
     :rtype: numpy.ndarray
 
-    .. note:: Two design choices work together to suppress interference artefacts.
-        First, each carrier is given a random starting phase (rather than all starting
-        in phase at :math:`t=0`), which prevents coherent onset transients from
-        producing a deterministic, frequency-swept interference ("fingerprint") pattern.
-        Second, the carrier grid is deliberately dense: adjacent log-spaced carriers
-        that fall within the same cochlear filter's bandwidth beat at their frequency
-        difference regardless of phase, so many carriers per filter are needed for those
-        pair-beats to add incoherently and integrate out. Together these approximate the
-        broadband-noise carrier described by Chi et al. (2005) and leave only the
-        intended horizontal spectral stripes.
+    .. warning:: If you plan on using this signal with ``wav2aud`` make sure that the maximum and minimum frequencies are
+        within the calibrated range. For the default ``wav2aud`` parameters (octave shift 0, sampling rate 16kHz) the range is 180-7040Hz.
+        For non-default paramters, you may need to adjust ``f_min`` and ``f_max`` accordingly.
     """
-    t = np.arange(0, duration, 1 / sf)
+    n_octaves = np.log2(f_max / f_min)
+    num_sinusoids = max(2, round(scale * n_octaves) + 1)
 
-    freqs = np.geomspace(f_min, f_max, num_channels)
-
-    # position in octaves relative to f_min
-    octave_pos = np.log2(freqs / f_min)
-
-    # random per-carrier phases so carriers do not all cohere at t=0 (see note)
-    rng = np.random.default_rng(seed)
-    phases = rng.uniform(0, 2 * np.pi, size=num_channels)
-
-    signal = np.zeros_like(t)
-
-    for f, x, phi in zip(freqs, octave_pos, phases):
-        amplitude = np.sin(2 * np.pi * scale * x)
-        signal += amplitude * np.sin(2 * np.pi * f * t + phi)
-
-    return signal
+    return gen_spectral_modulations(num_sinusoids=num_sinusoids, f_min=f_min,
+                                    f_max=f_max, duration=duration, sf=sf)
