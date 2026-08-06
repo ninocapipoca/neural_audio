@@ -88,5 +88,14 @@ class stepTest(unittest.TestCase):
         diff = np.abs(py_out.T - matlab_out)
         np.testing.assert_allclose(0 * diff, diff, atol=1e-2)
 
+class channelCoverageTest(unittest.TestCase):
+    def test_all_channels_populated(self):
+        # Guards against an off-by-one in wav2aud's channel loop leaving a
+        # frequency channel at its np.zeros initialisation value. The MATLAB
+        # comparisons above use atol=1e-2, which is too loose to catch this
+        # for the lowest channels.
+        wave = np.sin(2 * np.pi * 440 * np.arange(0, 1, 1/sf))
+        _, _, py_out = wav2aud(wave)
 
-    
+        empty = [ch for ch in range(py_out.shape[1]) if np.all(py_out[:, ch] == 0)]
+        self.assertEqual(empty, [], f"channels never written: {empty}")

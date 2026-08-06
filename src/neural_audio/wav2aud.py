@@ -194,7 +194,7 @@ def wav2aud(x: np.ndarray,
 
 
     # --- Remaining channels (high -> low frequency) ---
-    for ch in range(M-2, 0, -1):
+    for ch in range(M-2, -1, -1):
         if verbose:
             logger.debug(f"processing channel {ch}")
 
