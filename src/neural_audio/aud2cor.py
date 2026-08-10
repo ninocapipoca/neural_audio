@@ -5,25 +5,25 @@ def corcplxw(z, fout):
     data = np.concatenate([np.real(z).ravel(order="F"), np.imag(z).ravel(order="F")])
     fout.write(data.astype(np.float32).tobytes())
 
-def aud2cor(y: np.ndarray, 
+def aud2cor(audiogram: np.ndarray, 
             frame_length: int=4,
-            tp_margin: float=0, # fullness of temporal margin
-            sp_margin: float=0, # fullness of spectral margin
+            temporal_margin: float=0, # fullness of temporal margin
+            spectral_margin: float=0, # fullness of spectral margin
             bandpass: int=1,
             rates: np.ndarray=None,
             scales: np.ndarray=None,
-            ch_per_oct: int=None): 
+            channels_per_oct: int=None): 
     """
     Cortical rate-scale representation (forward transform).
 
-    :param y: The auditory spectrogram, i.e. the output of ``wav2aud``, of shape :math:`[N, M]`, where :math:`N` is the number of time-frames and :math:`M=128` is the number of frequency channels. Pass it in directly, exactly as returned by ``wav2aud`` (no transpose), matching the MATLAB NSL toolbox convention.
-    :type y: numpy.ndarray
+    :param audiogram: The auditory spectrogram, i.e. the output of ``wav2aud``, of shape :math:`[N, M]`, where :math:`N` is the number of time-frames and :math:`M=128` is the number of frequency channels. Pass it in directly, exactly as returned by ``wav2aud`` (no transpose), matching the MATLAB NSL toolbox convention.
+    :type audiogram: numpy.ndarray
 
-    :param tp_margin: Fullness of the temporal margin; any real value in [0,1].
-    :type tp_margin: float, optional, default=0
+    :param temporal_margin: Fullness of the temporal margin; any real value in [0,1].
+    :type temporal_margin: float, optional, default=0
 
-    :param sp_margin: Fullness of the spectral margin; any real value in [0,1].
-    :type sp_margin: float, optional, default=0
+    :param spectral_margin: Fullness of the spectral margin; any real value in [0,1].
+    :type spectral_margin: float, optional, default=0
 
     :param bandpass: Controls passband for filter generating functions `gen_corf` and `gen_cort`. If set to 1, only bandpass filters will
         be generated. Must be an integer boolean, i.e. the literal int `0` or `1`. Python's `True`/`False` are not
@@ -41,33 +41,33 @@ def aud2cor(y: np.ndarray,
         If none is given, set to `2 ** np.linspace(np.log2(1/5), np.log2(10), 32)`
     :type scales: np.ndarray, optional, default=None
 
-    :param ch_per_oct: Frequency resolution of the auditory spectrogram, in channels per octave. This determines
-        how `gen_corf` interprets the spectral (frequency) axis of `y` when generating filters. If you are using
+    :param channels_per_oct: Frequency resolution of the auditory spectrogram, in channels per octave. This determines
+        how `gen_corf` interprets the spectral (frequency) axis of `audiogram` when generating filters. If you are using
         the default filters supplied by Shamma et al. (i.e. the ones loaded by `wav2aud` when no custom `filters`
         dictionary is given), leave this as `None` and it will default to `20 if M == 95 else 24`, matching the
         channel spacing of those filters. If you are using your own custom filters (e.g. a different number of
-        channels per octave), you should supply the corresponding `ch_per_oct` value here explicitly, since it
+        channels per octave), you should supply the corresponding `channels_per_oct` value here explicitly, since it
         will not necessarily match the default.
-    :type ch_per_oct: int, optional, default=None
+    :type channels_per_oct: int, optional, default=None
 
     .. note:: The output of ``wav2aud`` already has shape :math:`[N, M]` = (time-frames, frequency channels) and is passed to ``aud2cor`` directly, with no transpose. This mirrors the MATLAB NSL toolbox, where ``aud2cor`` takes the ``wav2aud`` output as-is.
 
-    :returns: `cr` - Cortical representation (numpy.ndarray), a 4-D complex array of shape
+    :returns: `corticogram` - Cortical representation (numpy.ndarray), a 4-D complex array of shape
         (num_scales, num_rates*2, N + 2*dN, M + 2*dM), i.e. (scale, rate*2, time, frequency).
         The rate axis holds both sweep directions (hence num_rates*2), and the time/frequency axes
-        include any margins added via ``tp_margin`` / ``sp_margin``. This matches the MATLAB NSL
+        include any margins added via ``temporal_margin`` / ``spectral_margin``. This matches the MATLAB NSL
         toolbox output ordering [scale, rate*2, time, frequency].
     """
 
     # --- Input validation ---
 
-    assert isinstance(y, np.ndarray) and y.ndim == 2, "Input auditory spectrogram y should be a 2-D numpy array."
+    assert isinstance(audiogram, np.ndarray) and audiogram.ndim == 2, "Input auditory spectrogram audiogram should be a 2-D numpy array."
 
     assert isinstance(frame_length, int) and frame_length > 0, "The frame_length parameter should be a positive integer."
 
-    # Ensure tp_margin and sp_margin are floats or integers within [0, 1]
-    assert isinstance(tp_margin, (int, float)), "The tp_margin parameter should be a float or integer."
-    assert isinstance(sp_margin, (int, float)), "The sp_margin parameter should be a float or integer."
+    # Ensure temporal_margin and spectral_margin are floats or integers within [0, 1]
+    assert isinstance(temporal_margin, (int, float)), "The temporal_margin parameter should be a float or integer."
+    assert isinstance(spectral_margin, (int, float)), "The spectral_margin parameter should be a float or integer."
 
     # Ensure bandpass is an integer boolean: must be a numeric type (not bool) and equal to 0 or 1
     assert isinstance(bandpass, int) and not isinstance(bandpass, bool) and bandpass in (0, 1), \
@@ -81,17 +81,17 @@ def aud2cor(y: np.ndarray,
     if scales is not None:
         assert isinstance(scales, np.ndarray), "The scales parameter should be a numpy.ndarray, if supplied."
 
-    # Ensure ch_per_oct, if supplied, is a positive integer
-    if ch_per_oct is not None:
-        assert isinstance(ch_per_oct, int) and ch_per_oct > 0, "The ch_per_oct parameter should be a positive integer, if supplied."
+    # Ensure channels_per_oct, if supplied, is a positive integer
+    if channels_per_oct is not None:
+        assert isinstance(channels_per_oct, int) and channels_per_oct > 0, "The channels_per_oct parameter should be a positive integer, if supplied."
 
     # Check margins are within allowed range
-    if not (0 <= tp_margin <= 1):
-        raise ValueError(f"tp_margin must be in [0, 1], got {tp_margin}")
-    if not (0 <= sp_margin <= 1):
-        raise ValueError(f"sp_margin must be in [0, 1], got {sp_margin}")
+    if not (0 <= temporal_margin <= 1):
+        raise ValueError(f"temporal_margin must be in [0, 1], got {temporal_margin}")
+    if not (0 <= spectral_margin <= 1):
+        raise ValueError(f"spectral_margin must be in [0, 1], got {spectral_margin}")
 
-    # set default spfilt and tpfilt params
+    # set default rate and scales params
     if scales is None:
         scales = 2 ** np.linspace(np.log2(1/5), np.log2(10), 32)
     if rates is None:
@@ -101,11 +101,11 @@ def aud2cor(y: np.ndarray,
     rates = np.asarray(rates).ravel()
     num_rates = len(rates) # number of rate channels K1
     num_scales = len(scales) # number of scale channels K2
-    N, M = y.shape # dimensions of audiogram; shape (timepoints, num channels)
+    N, M = audiogram.shape # dimensions of audiogram; shape (timepoints, num channels)
 
     fps = 1000.0 / frame_length # frames per second (fps)
-    if ch_per_oct is None:
-        ch_per_oct = 20 if M == 95 else 24 # channels per octave (ch_per_oct)
+    if channels_per_oct is None:
+        channels_per_oct = 20 if M == 95 else 24 # channels per octave (channels_per_oct)
 
     # --- FFT padding sizes ---
     N_pad = int(2 ** np.ceil(np.log2(N)))
@@ -117,7 +117,7 @@ def aud2cor(y: np.ndarray,
     # First along frequency axis, then along time axis
     Y = np.zeros((N_pad*2, M_pad), dtype=complex)
     for n in range(N):
-        R1 = np.fft.fft(y[n, :], 2*M_pad)
+        R1 = np.fft.fft(audiogram[n, :], 2*M_pad)
         Y[n, :] = R1[:M_pad]
     for m in range(M_pad): # !! fft on output of previous (Y)
         # NOTE Allows you to capture interaction
@@ -125,7 +125,7 @@ def aud2cor(y: np.ndarray,
         Y[:, m] = R1
 
     # --- Index setup ---
-    dM   = int(np.floor(M / 2 * sp_margin))
+    dM   = int(np.floor(M / 2 * spectral_margin))
 
     # frequency margin indices into the (2*M_pad)-length IFFT output
     mdx1 = np.concatenate([
@@ -133,19 +133,19 @@ def aud2cor(y: np.ndarray,
         np.arange(0, M + dM) # main + right margin
     ]).astype(int)
 
-    dN   = int(np.floor(N / 2 * tp_margin))
+    dN   = int(np.floor(N / 2 * temporal_margin))
     ndx  = np.arange(0, N + 2 * dN)   # time indices into IFFT output
     ndx1 = ndx
 
     # --- Output array ---
-    cr = np.zeros((num_scales, num_rates * 2, N + 2 * dN, M + 2 * dM), dtype=complex)
+    corticogram = np.zeros((num_scales, num_rates * 2, N + 2 * dN, M + 2 * dM), dtype=complex)
 
     # ------------------------------------------------------------------ #
     # Main loop: rate × direction × scale                                #
     # ------------------------------------------------------------------ #
     for rdx in range(num_rates):
-        cf_rt = rates[rdx] # PASS shape [idx, num_rates]
-        HR = gen_cort(cf_rt, N_pad, fps, [rdx + 1 + bandpass, num_rates + bandpass * 2])
+        tune_rate = rates[rdx] # PASS shape [idx, num_rates]
+        HR = gen_cort(tune_rate, N_pad, fps, [rdx + 1 + bandpass, num_rates + bandpass * 2])
 
         for sgn in [1, -1]:
 
@@ -160,13 +160,12 @@ def aud2cor(y: np.ndarray,
             z1_freq = np.zeros((2*N_pad, M_pad), dtype=complex)
             for m in range(M_pad):
                 z1_freq[:, m] = HR * Y[:, m] # equivalent to convolution (with frequency-domain wavelet) using convolution theorem
-            z1 = np.fft.ifft(z1_freq, axis=0)   # (2*N_pad, M_pad) trying to match original freq and time to s.t. modulation patterns found
-            z1 = z1[ndx1, :]                     # (N+2*dN, M_pad)
+            z1 = np.fft.ifft(z1_freq, axis=0)   # (2*N_pad, M_pad)
+            z1 = z1[ndx1, :] # (N+2*dN, M_pad)
 
             for sdx in range(num_scales):
-                cycles_per_oct = scales[sdx]
-                HS = gen_corf(cycles_per_oct, M_pad, ch_per_oct, func_type='gaussian',
-                              PASS=[sdx + 1 + bandpass, num_scales + bandpass * 2])
+                tune_scale = scales[sdx]
+                HS = gen_corf(tune_scale, M_pad, channels_per_oct, func_type='gaussian', PASS=[sdx + 1 + bandpass, num_scales + bandpass * 2])
 
                 # --- Second IFFT (along frequency axis) ---
                 z = np.zeros((N + 2 * dN, M + 2 * dM), dtype=complex)
@@ -176,11 +175,11 @@ def aud2cor(y: np.ndarray,
 
                 # Store in output array
                 col = rdx + (num_rates if sgn == 1 else 0)
-                cr[sdx, col, :, :] = z
+                corticogram[sdx, col, :, :] = z
 
 
 
-    return cr
+    return corticogram
 
 
 # ------------------------------------------------------------------ #
@@ -195,10 +194,10 @@ def gen_cort(cf: float, filt_len: int, sf: int, PASS: np.ndarray=None):
     The time points t are built from a vector of indices from 0 to L-1, which are then
     divided by the sampling rate and multiplied by the characteristic frequency, which
     converts time to 'one period of the characteristic frequency'. This helps standardize
-    the shape of the impulse response across different sampling rates.
+    the shape of the impulse response acorticogramoss different sampling rates.
 
-    The shape of the temporal impulse response `h` is a gamma function as described in Chi(2005), which
-    is then multiplied by `cf` to ensure similar behavior across different center frequencies.
+    The shape of the temporal impulse response `h` is a gamma function as descorticogramibed in Chi(2005), which
+    is then multiplied by `cf` to ensure similar behavior acorticogramoss different center frequencies.
     The result is adjusted to have zero-mean (remove zero-frequencies). 
     
     The Fourier transform of `h` is computed to convert this time-domain representation into the frequency domain, 
@@ -261,7 +260,7 @@ def gen_cort(cf: float, filt_len: int, sf: int, PASS: np.ndarray=None):
     return amplitude * np.exp(1j*phase)
 
 
-def gen_corf(cycles_per_oct: int, filt_len: int, ch_per_oct: int, func_type='gaussian', PASS=None):
+def gen_corf(tune_scale: int, filt_len: int, channels_per_oct: int, func_type='gaussian', PASS=None):
     """ 
     Calculates frequency-domain transfer function for a spectral filter based on
     the given parameters.
@@ -278,17 +277,17 @@ def gen_corf(cycles_per_oct: int, filt_len: int, ch_per_oct: int, func_type='gau
 
     For a lowpass filter, everything up to the maximum is flattened to 1 (ideal pass). Likewise, 
     for highpass filtering, everything from the maximum until the end is flattened to 1. In both
-    cases, the sum of the transfer function is readjusted to preserve the filter's gain across all
+    cases, the sum of the transfer function is readjusted to preserve the filter's gain acorticogramoss all
     passbands. If bandpass behavior is specified, the transfer function remains unchanged. 
 
-    :param cycles_per_oct: (Spectral) modulation rate in cycles per octave
-    :type cycles_per_oct: int
+    :param tune_scale: (Spectral) modulation rate in cycles per octave
+    :type tune_scale: int
 
     :param filt_len: Filter length, ideally a power of 2
     :type filt_len: int
 
-    :param ch_per_oct: Frequency resolution in channels per octave
-    :type ch_per_oct: int
+    :param channels_per_oct: Frequency resolution in channels per octave
+    :type channels_per_oct: int
 
     :param func_type: Selects which function is used to define the filter response:
             - `gabor`: Gabor function
@@ -308,7 +307,7 @@ def gen_corf(cycles_per_oct: int, filt_len: int, ch_per_oct: int, func_type='gau
     if func_type not in ('gaussian', 'gabor'):
         raise ValueError("func_type must be 'gaussian' or 'gabor'")
 
-    octave_offsets = np.arange(filt_len)/filt_len * ch_per_oct/2/abs(cycles_per_oct)
+    octave_offsets = np.arange(filt_len)/filt_len * channels_per_oct/2/abs(tune_scale)
 
     if func_type == 'gabor':
         C1 = 1/(2*.3*.3)

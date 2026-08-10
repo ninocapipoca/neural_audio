@@ -1,6 +1,6 @@
 import unittest
 from parameterized import parameterized
-from neural_audio.examples.sounds.load import load_sound_file_paths2
+from neural_audio.examples.sounds.load import load_sound_file_paths
 from pathlib import Path
 import numpy as np
 import h5py
@@ -13,18 +13,22 @@ matlab_outputs = test_dir / 'matlab_outputs' / 'aud2cor'
 
 sf = 16000 # sampling frequency
 
+# HALF-RESOLUTION rates and scales
+half_rates = 2 ** np.linspace(np.log2(0.5), np.log2(128), 16)   # temporal modulation rates [Hz]
+half_scales = 2 ** np.linspace(np.log2(1/5), np.log2(10), 16)   # spectral modulation scales [cyc/oct]
+
 def construct_cases_audio():
 
     # associates an audio file with the corresponding matlab output for natural sounds
     out = []
-    for sound_file in load_sound_file_paths2():
-        cr_file = matlab_outputs / f"cr_{sound_file.stem}.mat"
+    for sound_file in load_sound_file_paths():
+        cr_file = matlab_outputs / f"cr_halfres_{sound_file.stem}.mat"
         if cr_file.exists():
             out.append([sound_file, cr_file])
 
     # do the same for synthetic sounds
-    for sound_file in load_sound_file_paths2(synthetic=True):
-        cr_file = matlab_outputs / 'synthetic' / f"cr_{sound_file.stem}.mat"
+    for sound_file in load_sound_file_paths(synthetic=True):
+        cr_file = matlab_outputs / 'synthetic' / f"cr_halfres_{sound_file.stem}.mat"
         if cr_file.exists():
             out.append([sound_file, cr_file])
     
@@ -47,8 +51,8 @@ class audioTests(unittest.TestCase):
 
         # get python result
         _, _, spect = wav2aud(soundData)
-        py_out = aud2cor(spect)
+        py_out = aud2cor(spect, rates=half_rates, scales=half_scales)
 
-        py_out_reordered = np.transpose(py_out, (2, 3, 1, 0))
+        matlab_out = np.transpose(matlab_out, axes=range(matlab_out.ndim)[::-1])
         
-        np.testing.assert_allclose(py_out_reordered, matlab_out, atol=1e-2)
+        np.testing.assert_allclose(py_out, matlab_out, atol=1e-2)

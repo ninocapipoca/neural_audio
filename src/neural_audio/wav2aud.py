@@ -15,7 +15,7 @@ def wav2aud(x: np.ndarray,
             verbose: bool=False, 
             filters: Dict=dict()) -> Tuple[np.ndarray, np.ndarray, np.ndarray]: 
     
-    r"""This function computes a biologically inspired spectrogram (also known as audiogram) of an acoustic waveform by simulating the
+    """This function computes a biologically inspired spectrogram (also known as audiogram) of an acoustic waveform by simulating the
     transduction mechanism of the ferret cochlea, following the NSL Matlab toolbox by Yang, Wang and Shamma (1992 and 1994).
     
     A section of the cochlea spanning 128 hair-cells with a frequency selectivity calibrated to the range 180-7040Hz (given 
@@ -28,7 +28,7 @@ def wav2aud(x: np.ndarray,
     
     :param x: The input waveform as a 1-D time-series of audio samples with a maximum sampling frequency of 16kHz. The use of lower 
         sampling rates is supported and has to be specified using the ``octave_shift`` parameter. Note, if the length of ``x`` is not
-        an integer multiple of ``frame_length``, then ``x`` will be pre-padded with zeros to round up the length to that next integer multiple.
+        an integer multiple of ``frame_length``, then zeros will be appended to the end of ``x`` to round up the length to that next integer multiple.
     :type x: numpy.ndarray
     :param octave_shift: At a default sampling rate of 16kHz, the simulated hair-cells span a frequency range of 180-7040 Hz, corresponding 
         to the 64 muscial notes F#3-A8 whereby each note is covered by two hair-cells. These :math:`\approx 5.3` octaves will be shifted if the sampling rate 
