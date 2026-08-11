@@ -102,7 +102,7 @@ def plot_cr_projection(cr, rates, scales=None, frequencies=None, figsize=(12, 4)
 
     :param cr: 4-D cortical output, shape (num_scales, num_rates*2, num_time, num_freq).
         num_time and num_freq may include zero/wrap-around margins added by aud2cor's
-        tp_margin / sp_margin (note that margin columns/rows are shown
+        temporal_margin / spectral_margin (note that margin columns/rows are shown
         but left unlabeled since they have no physical meaning).
     :type cr: numpy.ndarray
     :param rates: Rate vector used in aud2cor (length = num_rates, i.e. half of cr.shape[1]).
@@ -112,7 +112,7 @@ def plot_cr_projection(cr, rates, scales=None, frequencies=None, figsize=(12, 4)
     :type scales: np.ndarray, optional
     :param frequencies: Characteristic frequencies from wav2aud (for real tick labels). If
         None, the axis shows the index. Length is expected to be <= cr.shape[3]; if cr's
-        frequency axis is wider (because sp_margin > 0 was used in aud2cor), the extra
+        frequency axis is wider (because spectral_margin > 0 was used in aud2cor), the extra
         margin columns are included in the plot but left unlabeled.
     :type frequencies: np.ndarray, optional
     :param figsize: Figure size, used only when a new figure is created (``axes=None``).
@@ -232,7 +232,7 @@ def plot_cr_temporal(cr, rates, scales=None, time_points=None,
         ``(num_scales, num_rates*2, num_time, num_freq)`` (averaged together), or a single
         direction, shape ``(num_scales, num_rates, num_time, num_freq)`` (used as-is).
         ``num_time`` may include the margins added by ``aud2cor``'s
-        ``tp_margin``; margin columns are shown but left unlabeled.
+        ``temporal_margin``; margin columns are shown but left unlabeled.
     :type cr: numpy.ndarray
     :param rates: Rate vector used in ``aud2cor`` (length ``= num_rates``).
     :type rates: np.ndarray
@@ -241,7 +241,7 @@ def plot_cr_temporal(cr, rates, scales=None, time_points=None,
     :type scales: np.ndarray, optional
     :param time_points: Time values (in seconds) for the *unpadded* time frames, e.g. the
         ``time_points`` returned by ``wav2aud``. Used for real x-tick labels; when shorter
-        than ``cr``'s time axis (because ``tp_margin > 0`` was used) the labels are offset
+        than ``cr``'s time axis (because ``temporal_margin > 0`` was used) the labels are offset
         into the real-data region. If ``None``, the axis shows the frame index.
     :type time_points: np.ndarray, optional
     :param figsize: Figure size, used only when a new figure is created (``axes=None``).
@@ -407,18 +407,18 @@ def plot_tempfilt_response(H, fps, center=None, max_freq=None,
 
     return ax
 
-def plot_spectfilt_response(H, ch_per_oct, max_scale=None, title=None, ax=None):
+def plot_spectfilt_response(H, channels_per_oct, max_scale=None, title=None, ax=None):
     """Plot the magnitude response of a single cortical scale (spectral)
     filter, as produced by one call to ``gen_corf``.
  
     :param H: The filter's magnitude response, i.e. the array returned by
-        ``gen_corf(fc, L, ch_per_oct, func_type)``. Its length is used directly
+        ``gen_corf(fc, L, channels_per_oct, func_type)``. Its length is used directly
         to build the frequency axis, so pass in ``H`` exactly as returned.
     :type H: numpy.ndarray
-    :param ch_per_oct: Channels per octave used when ``H`` was generated
-        (the same ``ch_per_oct`` / ``SRF`` argument passed to ``gen_corf``).
+    :param channels_per_oct: Channels per octave used when ``H`` was generated
+        (the same ``channels_per_oct`` / ``SRF`` argument passed to ``gen_corf``).
         Needed here to convert array index into cycles/octave.
-    :type ch_per_oct: int
+    :type channels_per_oct: int
     :param max_scale: If given, the x-axis is cut off at this scale
         (cycles/octave) for readability. This only changes the view, not
         the data -- the full ``H`` is still plotted underneath.
@@ -439,9 +439,9 @@ def plot_spectfilt_response(H, ch_per_oct, max_scale=None, title=None, ax=None):
     L = len(H)
  
     # Real frequency axis in cyc/oct: index m of H corresponds to
-    # m/L * ch_per_oct/2 (same derivation as R1 inside gen_corf, just
+    # m/L * channels_per_oct/2 (same derivation as R1 inside gen_corf, just
     # without dividing out fc).
-    freqs = np.arange(L) / L * ch_per_oct / 2
+    freqs = np.arange(L) / L * channels_per_oct / 2
  
     if ax is None:
         _, ax = plt.subplots(figsize=(6, 4))
