@@ -118,20 +118,17 @@ def gen_spectral_modulations(num_sinusoids: int=6,
 
     return h_stripes
 
-def gen_ripple(rate: float, 
-               scale: float, 
-               duration: float = 2.0, 
+def gen_ripple(rate: float,
+               scale: float,
+               duration: float = 2.0,
                sf: int = 16000,
-               f_min: float = 180, 
-               f_max: float = 7040, 
-               num_channels: int = 128,
-               mod_depth: float = 0.9,
-               phase: float = 0.0,
+               f_min: float = 180,
+               f_max: float = 7040,
                seed: int = 0) -> np.ndarray:
     r"""
     Generates a sinusoidal ripple stimulus following the description in Chi et al. (2005), caption of Fig. 1(b):
 
-    :math:`S(t, x) = 1 + A \sin (2\pi(wt + \Omega x) + \Phi)`
+    :math:`S(t, x) = 1 + \sin (2\pi(wt + \Omega x))`
 
     where x is position along the log-frequency axis in octaves relative to `f_min`,
     w (rate) is the ripple velocity in Hz, and Omega (scale) is the ripple density
@@ -142,11 +139,7 @@ def gen_ripple(rate: float,
     Here, S(t,x) is referred to as the ripple function, which is not the same as the signal
     itself; it only describes how the signal changes across time and frequency.
 
-    Each carrier is given a random starting phase, which approximates the broadband-noise
-    carrier described by Chi et al. (2005) and leaves only the intended ripple pattern
-    (see note below).
-
-    :param rate: Ripple velocity (w), in Hz. Controls how quickly the stimulus modulations happen in time. 
+    :param rate: Ripple velocity (w), in Hz. Controls how quickly the stimulus modulations happen in time.
         Sign controls sweep direction (up/down).
     :type rate: float
 
@@ -154,7 +147,7 @@ def gen_ripple(rate: float,
     :type scale: float
 
     :param duration: Duration of the signal, in seconds.
-    :type duration: float
+    :type duration: float, optional, default=2.0
 
     :param sf: Sampling frequency, in Hz.
     :type sf: int, optional, default=16000
@@ -165,19 +158,6 @@ def gen_ripple(rate: float,
     :param f_max: Highest carrier (sinusoid) frequency, in Hz.
     :type f_max: float, optional, default=7040
 
-    :param num_channels: Number of log-spaced carrier sinusoids spanning f_min-f_max.
-    :type num_channels: int, optional, default=128
-
-    :param mod_depth: Modulation depth (A). Should be <= 1 to avoid negative envelope values. 
-        Controls the amplitude of the ripple curve. Controls how extreme the changes in the 
-        stimulus are (i.e, the contrast).
-    :type mod_depth: float, optional, default=0.9
-
-    :param phase: Ripple phase (Phi), in radians. Shifts ripple curve, changing where the
-        peaks and troughs sit relative to the frequency channels. This applies to the ripple
-        envelope, and is distinct from the random per-carrier phases described below.
-    :type phase: float, optional, default=0
-
     :param seed: Seed for the random carrier phases. A fixed value keeps the output
         reproducible; pass a different value for an independent realisation.
     :type seed: int, optional, default=0
@@ -185,34 +165,41 @@ def gen_ripple(rate: float,
     :returns: 1D signal of shape (duration*sf,).
     :rtype: numpy.ndarray
 
-    .. note:: Each carrier is given a random starting phase rather than all starting in phase
-        at :math:`t=0`. Carriers that all cohere at :math:`t=0` produce a deterministic,
-        frequency-swept interference ("fingerprint") pattern that is visible in the audiogram
-        as curved streaks near the onset, on top of the intended ripple. Randomising the
-        starting phases removes that pattern without affecting the rate and scale of the
-        ripple itself.
+    .. note:: Two design choices work together to suppress interference artefacts in the audiogram.
+        First, each carrier is given a random starting phase (rather than all starting in phase at
+        :math:`t=0`), which prevents coherent onset transients from producing a deterministic,
+        frequency-swept interference ("fingerprint") pattern near the onset. Second, the carrier
+        grid is deliberately dense (1024 log-spaced carriers): adjacent carriers that fall within
+        the same cochlear filter's bandwidth beat at their frequency difference regardless of phase,
+        so many carriers per filter are needed for those pair-beats to add incoherently and integrate
+        out. Together these approximate the broadband-noise carrier described by Chi et al. (2005)
+        and leave only the intended diagonal ripple.
 
     .. rubric:: References
 
     .. [1] Chi, Taishih & Ru, Powen & Shamma, Shihab (2005),
         "Multiresolution spectrotemporal analysis of complex sounds" ,
-        The Journal of the Acoustical Society of America, 118, 887-906, 
+        The Journal of the Acoustical Society of America, 118, 887-906,
         10.1121/1.1945807
     """
+    num_channels = 1024  # dense enough that pair-beats within a cochlear filter cancel (see note)
     t = np.arange(0, duration, 1 / sf)
-
-    # log-spaced carrier frequencies and their octave positions
     freqs = np.geomspace(f_min, f_max, num_channels)
-    rel_pos = np.log2(freqs / f_min) # relative position in octaves, 0 at f_min
+    rel_pos = np.log2(freqs / f_min)  # position in octaves, 0 at f_min
 
     # random per-carrier phases so carriers do not all cohere at t=0 (see note)
     rng = np.random.default_rng(seed)
     carrier_phases = rng.uniform(0, 2 * np.pi, size=num_channels)
 
+    # Pre-compute the shared 2*pi*t factor and the time part of the ripple envelope
+    # argument (independent of the carrier index), so the loop only does per-carrier work.
+    tau = 2 * np.pi * t
+    env_time = rate * tau
+
     signal = np.zeros_like(t)
-    for f, pos, carrier_phase in zip(freqs, rel_pos, carrier_phases):
-        envelope = 1 + mod_depth * np.sin(2 * np.pi * (rate * t + scale * pos) + phase)
-        signal += envelope * np.sin(2 * np.pi * f * t + carrier_phase)
+    for f, pos, cp in zip(freqs, rel_pos, carrier_phases):
+        envelope = 1 + np.sin(env_time + 2 * np.pi * scale * pos)
+        signal += envelope * np.sin(f * tau + cp)
 
     return signal
 
