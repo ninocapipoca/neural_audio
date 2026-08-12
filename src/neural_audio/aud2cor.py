@@ -165,7 +165,7 @@ def aud2cor(audiogram: np.ndarray,
 
             for sdx in range(num_scales):
                 tune_scale = scales[sdx]
-                HS = gen_corf(tune_scale, M_pad, channels_per_oct, func_type='gaussian', PASS=[sdx + 1 + bandpass, num_scales + bandpass * 2])
+                HS = gen_corf(tune_scale, M_pad, channels_per_oct, PASS=[sdx + 1 + bandpass, num_scales + bandpass * 2])
 
                 # --- Second IFFT (along frequency axis) ---
                 z = np.zeros((N + 2 * dN, M + 2 * dM), dtype=complex)
@@ -260,7 +260,7 @@ def gen_cort(cf: float, filt_len: int, sf: int, PASS: np.ndarray=None):
     return amplitude * np.exp(1j*phase)
 
 
-def gen_corf(tune_scale: int, filt_len: int, channels_per_oct: int, func_type='gaussian', PASS=None):
+def gen_corf(tune_scale: int, filt_len: int, channels_per_oct: int, PASS=None):
     """ 
     Calculates frequency-domain transfer function for a spectral filter based on
     the given parameters.
@@ -289,11 +289,6 @@ def gen_corf(tune_scale: int, filt_len: int, channels_per_oct: int, func_type='g
     :param channels_per_oct: Frequency resolution in channels per octave
     :type channels_per_oct: int
 
-    :param func_type: Selects which function is used to define the filter response:
-            - `gabor`: Gabor function
-            - `gaussian`: Gaussian function (negative second derivative) (default)
-    :type func_type: str, optional, default='gaussian'
-
     :param PASS: Array of shape `[idx, upper_bound]` where `idx` denotes index and `upper_bound` is the maximum
         value of this index. Dictates passband.
         If none supplied, defaults to bandpass (`[2, 3]`). Possible values and outcomes:
@@ -303,18 +298,17 @@ def gen_corf(tune_scale: int, filt_len: int, channels_per_oct: int, func_type='g
     :type PASS: np.ndarray, optional, default=None
 
     :returns: np.ndarray - Filter transfer function (in frequency domain)
+
+    .. note:: The original MATLAB implementation of this function included an option to use a Gabor (rather than a Gaussian)
+        function to define filter behavior. Since it is unclear how modifying this parameter would affect the biological or 
+        mathematical validity of the model, this option has been removed.
     """
-    if func_type not in ('gaussian', 'gabor'):
-        raise ValueError("func_type must be 'gaussian' or 'gabor'")
 
     octave_offsets = np.arange(filt_len)/filt_len * channels_per_oct/2/abs(tune_scale)
 
-    if func_type == 'gabor':
-        C1 = 1/(2*.3*.3)
-        freq_tf = np.exp(-C1*(octave_offsets-1)**2) + np.exp(-C1*(octave_offsets+1)**2)
-    else:
-        octave_offsets = octave_offsets**2
-        freq_tf = octave_offsets*np.exp(1-octave_offsets)
+    # Gaussian function used
+    octave_offsets = octave_offsets**2
+    freq_tf = octave_offsets*np.exp(1-octave_offsets)
 
     if PASS is not None:
         if PASS[0] == 1:
