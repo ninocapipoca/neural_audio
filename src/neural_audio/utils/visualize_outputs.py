@@ -159,11 +159,10 @@ def plot_cr_projection(cr, rates, scales=None, frequencies=None, figsize=(12, 4)
         If None, a new 1x3 figure is created.
     :type axes: sequence of matplotlib.axes.Axes, optional
     :param signed_rates: If ``True``, keep the two sweep directions on a single signed rate
-        axis (running ``-rates[::-1] .. +rates``) instead of averaging them together. The
+        axis (running ``-rates[::-1] .. +rates``) instead of the default behavior of averaging them together. The
         Scale-Rate and Rate-Frequency panels then span both directions, with a dashed line
         marking the boundary between the negative and positive halves and the peak landing
-        on the side matching the stimulus' sweep direction. The default (``False``) averages
-        the directions and is direction-blind. Both modes share a single colour scale per
+        on the side matching the stimulus' sweep direction. Both modes share a single colour scale per
         panel, so the weaker direction is not brightened to match the stronger one.
     :type signed_rates: bool, optional, default=False
 
