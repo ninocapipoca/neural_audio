@@ -1,0 +1,58 @@
+{
+  "source": "cr_halfres_geese.mat",
+  "dataset": "cr",
+  "shape": [
+    128,
+    810,
+    32,
+    16
+  ],
+  "split_axis": 0,
+  "dtype": "complex64",
+  "source_dtype": "complex128",
+  "parts": [
+    {
+      "file": "part_000.h5",
+      "start": 0,
+      "stop": 24,
+      "bytes": 74928787,
+      "sha256": "e7c52ba92bccdc8d11f585b4ed3f9a98f2ac4837800707eac85419fb945bb9ce"
+    },
+    {
+      "file": "part_001.h5",
+      "start": 24,
+      "stop": 48,
+      "bytes": 75036078,
+      "sha256": "e723e6c2cb115f0839e57bff6ae5666922525bfcc496fbfcfec15140b863e339"
+    },
+    {
+      "file": "part_002.h5",
+      "start": 48,
+      "stop": 72,
+      "bytes": 75110948,
+      "sha256": "48cb44aa4b33e15de79177e68ad1e41780cab1e1176cf90aa2697ed97c48b624"
+    },
+    {
+      "file": "part_003.h5",
+      "start": 72,
+      "stop": 96,
+      "bytes": 75179596,
+      "sha256": "9df1ac206b75a1334cfbcc2b0d85a3d0f5638a033737d02d1edb6a67e9babe1c"
+    },
+    {
+      "file": "part_004.h5",
+      "start": 96,
+      "stop": 120,
+      "bytes": 75305233,
+      "sha256": "11b72af643a1e0d75ab694d63eb0252113fd24d377e2ab0e7d181fd40c91a07a"
+    },
+    {
+      "file": "part_005.h5",
+      "start": 120,
+      "stop": 128,
+      "bytes": 25306617,
+      "sha256": "4c6520cac3f0238d0ac796bb6ae241a4fd4a92b2652993c9684dc8dce3403594"
+    }
+  ],
+  "source_sha256": "1fbcc6168527ce1fb44260f755ca1bed27c9e153c1431212ab27d71a1c49d69a"
+}

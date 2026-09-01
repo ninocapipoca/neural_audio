@@ -1,0 +1,44 @@
+{
+  "source": "cr_halfres_spectral_modulations_1.mat",
+  "dataset": "cr",
+  "shape": [
+    128,
+    500,
+    32,
+    16
+  ],
+  "split_axis": 0,
+  "dtype": "complex64",
+  "source_dtype": "complex128",
+  "parts": [
+    {
+      "file": "part_000.h5",
+      "start": 0,
+      "stop": 40,
+      "bytes": 78004681,
+      "sha256": "ff2326801e1d4b82e90800a5fb81bae9b81b0f69ae0b7a9325a85be8722eef48"
+    },
+    {
+      "file": "part_001.h5",
+      "start": 40,
+      "stop": 80,
+      "bytes": 77961089,
+      "sha256": "0ca7fae9a2e9a5829ce48d33f179f24c4d282bec1146f1a174dd43f2ae7cdba1"
+    },
+    {
+      "file": "part_002.h5",
+      "start": 80,
+      "stop": 120,
+      "bytes": 77973078,
+      "sha256": "81662f6450d32fad55070b75fca1dfa7f58ea79e95a38b52f5d55bd2d64e7d75"
+    },
+    {
+      "file": "part_003.h5",
+      "start": 120,
+      "stop": 128,
+      "bytes": 15568027,
+      "sha256": "0ed7c7f64fb91e9dac6fce23ee6c95c4f1f79e52331b7202e55ecd6c2ec5e443"
+    }
+  ],
+  "source_sha256": "42af08c1e3036a6e2ea8b17c868e478ca940edde2e122d8b2ae9e20e0cf9ca14"
+}

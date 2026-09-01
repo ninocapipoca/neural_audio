@@ -1,0 +1,58 @@
+{
+  "source": "cr_halfres_human speech.mat",
+  "dataset": "cr",
+  "shape": [
+    128,
+    750,
+    32,
+    16
+  ],
+  "split_axis": 0,
+  "dtype": "complex64",
+  "source_dtype": "complex128",
+  "parts": [
+    {
+      "file": "part_000.h5",
+      "start": 0,
+      "stop": 24,
+      "bytes": 69568933,
+      "sha256": "d4881cfd26c5feaccab57addca4e237259afb2501f40874a1546d99781e93a6d"
+    },
+    {
+      "file": "part_001.h5",
+      "start": 24,
+      "stop": 48,
+      "bytes": 69471189,
+      "sha256": "9f5a8e1e4a895f298f60d2d0fb039daf0418c82735e7edbebb2662eed091456b"
+    },
+    {
+      "file": "part_002.h5",
+      "start": 48,
+      "stop": 72,
+      "bytes": 69438951,
+      "sha256": "55d068f1d93f332a9489ab7823ba751d571f60f57e90d416b61734dc5def7aec"
+    },
+    {
+      "file": "part_003.h5",
+      "start": 72,
+      "stop": 96,
+      "bytes": 69330281,
+      "sha256": "e002cf35a89e58f495346905555e8d11cb543000d72a5f738f2785f940aa8b42"
+    },
+    {
+      "file": "part_004.h5",
+      "start": 96,
+      "stop": 120,
+      "bytes": 69436684,
+      "sha256": "2df7e305a1784334cbf809a320390115b042d660cd4862903a21d4274f143af1"
+    },
+    {
+      "file": "part_005.h5",
+      "start": 120,
+      "stop": 128,
+      "bytes": 23178354,
+      "sha256": "1c41a470cb6472bccfba467099a65605c983c90af0b08bb368648608ea0b0ce9"
+    }
+  ],
+  "source_sha256": "78982d8707b482f45725d1f067dac19730fd24d39ba9fdab80a6211a45d72550"
+}

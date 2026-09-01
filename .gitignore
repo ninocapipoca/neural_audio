@@ -1,2 +1,7 @@
 __pycache__/sigmoid.cpython-312.pyc
 src/neural_audio/utils/scratchpad.ipynb
+
+# Original MATLAB cortical references are too large for GitHub (hundreds of MB each).
+# Commit the split folders written by neural_audio.utils.mat_split instead.
+unit_tests/matlab_outputs/aud2cor/*.mat
+unit_tests/matlab_outputs/aud2cor/**/*.mat

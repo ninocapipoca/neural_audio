@@ -74,29 +74,65 @@ def plot_spectrogram(matrix: np.ndarray,
     plt.gca().yaxis.set_major_formatter(ticker.ScalarFormatter())
 
 
-def cr_projections(cr, rates):
+def cr_projections(cr, rates, signed_rates=False):
     """Compute the three 2-D projections of a cortical representation.
 
-    The magnitude ``|cr|`` is averaged over the two sweep directions and over the time
-    axis, then collapsed onto each remaining pair of axes. This is the shared computation
-    behind :func:`plot_cr_projection`; it is exposed separately so a cortical
-    representation can be reduced to its (small) projections without also plotting.
+    The magnitude ``|cr|`` is reduced over the time axis and then collapsed onto each
+    remaining pair of axes. This is the shared computation behind
+    :func:`plot_cr_projection`; it is exposed separately so a cortical representation can
+    be reduced to its (small) projections without also plotting.
+
+    ``cr``'s rate axis has length ``2*len(rates)``: the first half is the ``sgn = -1``
+    sweep-direction branch and the second half the ``sgn = +1`` branch (see
+    :func:`~neural_audio.aud2cor.aud2cor`). ``signed_rates`` controls how the two halves
+    are combined:
+
+    - ``False`` (default): the two directions are **averaged** together, so the rate axis
+      of the returned projections has length ``len(rates)`` and direction is discarded.
+      This is the historical behaviour.
+    - ``True``: the two directions are **kept side by side** on a single signed rate axis
+      of length ``2*len(rates)``. The first half is reversed onto negative rates and the
+      second half onto positive rates, matching
+      ``np.concatenate([-rates[::-1], rates])``. ``scale_rate`` and ``rate_freq`` then
+      carry the full ``2*len(rates)`` rate axis; ``scale_freq`` is identical in both modes.
+
+    The time axis is reduced scale-by-scale so the largest temporary is a single scale
+    slice rather than a full-resolution ``|cr|`` copy, which matters when ``aud2cor`` is
+    run with margins.
 
     :param cr: 4-D cortical output, shape (num_scales, num_rates*2, num_time, num_freq).
     :type cr: numpy.ndarray
     :param rates: Rate vector used in aud2cor (length = num_rates, i.e. half of cr.shape[1]).
     :type rates: np.ndarray
+    :param signed_rates: If ``True``, keep both sweep directions on a signed rate axis
+        instead of averaging them. See above.
+    :type signed_rates: bool, optional, default=False
 
     :returns: Tuple ``(scale_rate, scale_freq, rate_freq)`` of 2-D arrays.
     :rtype: tuple
     """
     n_rate = len(rates)
-    # magnitude, sweep directions averaged, then time-averaged -> [scale, rate, freq]
-    cr_avgr = ((np.abs(cr[:, :n_rate]) + np.abs(cr[:, n_rate:2 * n_rate])) / 2).mean(axis=2)
-    return cr_avgr.mean(2), cr_avgr.mean(1), cr_avgr.mean(0)
+
+    # Magnitude, time-averaged scale-by-scale -> [scale, 2*n_rate, freq]. Reducing the
+    # (large) time axis first bounds the peak temporary to one scale slice; a whole-array
+    # np.abs(cr) would be gigabytes at full resolution with margins.
+    mag = np.empty(cr.shape[:2] + cr.shape[3:])
+    for s in range(cr.shape[0]):
+        mag[s] = np.abs(cr[s]).mean(axis=1)
+
+    if signed_rates:
+        # first half reversed onto negative rates, second half onto positive
+        order = np.concatenate([np.arange(n_rate)[::-1], np.arange(n_rate) + n_rate])
+        reduced = mag[:, order]                                  # [scale, 2*n_rate, freq]
+    else:
+        # sweep directions averaged -> [scale, n_rate, freq]
+        reduced = (mag[:, :n_rate] + mag[:, n_rate:2 * n_rate]) / 2
+
+    return reduced.mean(2), reduced.mean(1), reduced.mean(0)
 
 
-def plot_cr_projection(cr, rates, scales=None, frequencies=None, figsize=(12, 4), axes=None):
+def plot_cr_projection(cr, rates, scales=None, frequencies=None, figsize=(12, 4), axes=None,
+                       signed_rates=False):
     """
     Plots 2D projections (scale-rate, scale-frequency, rate-frequency) of a cortical representation produced by `aud2cor`, with time averaged out.
 
@@ -122,6 +158,14 @@ def plot_cr_projection(cr, rates, scales=None, frequencies=None, figsize=(12, 4)
         larger subplot grid, so several representations can be compared in a single figure.
         If None, a new 1x3 figure is created.
     :type axes: sequence of matplotlib.axes.Axes, optional
+    :param signed_rates: If ``True``, keep the two sweep directions on a single signed rate
+        axis (running ``-rates[::-1] .. +rates``) instead of averaging them together. The
+        Scale-Rate and Rate-Frequency panels then span both directions, with a dashed line
+        marking the boundary between the negative and positive halves and the peak landing
+        on the side matching the stimulus' sweep direction. The default (``False``) averages
+        the directions and is direction-blind. Both modes share a single colour scale per
+        panel, so the weaker direction is not brightened to match the stronger one.
+    :type signed_rates: bool, optional, default=False
 
     :returns: The figure and its three axes
         ``(fig, (ax_scale_rate, ax_scale_freq, ax_rate_freq))``.
@@ -134,7 +178,7 @@ def plot_cr_projection(cr, rates, scales=None, frequencies=None, figsize=(12, 4)
             f"cr.shape[1] ({cr.shape[1]}) must equal 2*len(rates) ({2*len(rates)})."
         )
 
-    scale_rate, scale_freq, rate_freq = cr_projections(cr, rates)
+    scale_rate, scale_freq, rate_freq = cr_projections(cr, rates, signed_rates=signed_rates)
 
     # Frequency margin offset: real frequency i sits at data-column i + dM
     n_freq_actual = scale_freq.shape[1]
@@ -179,9 +223,19 @@ def plot_cr_projection(cr, rates, scales=None, frequencies=None, figsize=(12, 4)
             ax.set_xticks(f_idx + dM)
             ax.set_xticklabels([f"{frequencies[i]:.0f}" for i in f_idx], rotation=45)
 
-    # Rate ticks: x-axis on ax1, y-axis on ax3 (rates aren't padded)
-    r_idx = np.linspace(0, len(rates) - 1, 6).astype(int)
-    r_labels = [f"{rates[i]:.1f}" for i in r_idx]
+    # Rate ticks: x-axis on ax1, y-axis on ax3 (rates aren't padded, so no margin offset)
+    if signed_rates:
+        # signed axis of length 2*len(rates): -rates[::-1] .. +rates
+        signed = np.concatenate([-rates[::-1], rates])
+        r_idx = np.linspace(0, len(signed) - 1, 6).astype(int)
+        r_labels = [f"{signed[i]:+.1f}" for i in r_idx]
+        # dashed divider between the negative and positive halves
+        boundary = len(rates) - 0.5
+        ax1.axvline(boundary, color="grey", ls="--", lw=1)
+        ax3.axhline(boundary, color="grey", ls="--", lw=1)
+    else:
+        r_idx = np.linspace(0, len(rates) - 1, 6).astype(int)
+        r_labels = [f"{rates[i]:.1f}" for i in r_idx]
     ax1.set_xticks(r_idx); ax1.set_xticklabels(r_labels)
     ax3.set_yticks(r_idx); ax3.set_yticklabels(r_labels)
 
