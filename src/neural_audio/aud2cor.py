@@ -194,10 +194,10 @@ def gen_cort(cf: float, filt_len: int, sf: int, PASS: np.ndarray=None):
     The time points t are built from a vector of indices from 0 to L-1, which are then
     divided by the sampling rate and multiplied by the characteristic frequency, which
     converts time to 'one period of the characteristic frequency'. This helps standardize
-    the shape of the impulse response acorticogramoss different sampling rates.
+    the shape of the impulse response at different sampling rates.
 
     The shape of the temporal impulse response `h` is a gamma function as descorticogramibed in Chi(2005), which
-    is then multiplied by `cf` to ensure similar behavior acorticogramoss different center frequencies.
+    is then multiplied by `cf` to ensure similar behavior across different center frequencies.
     The result is adjusted to have zero-mean (remove zero-frequencies). 
     
     The Fourier transform of `h` is computed to convert this time-domain representation into the frequency domain, 
