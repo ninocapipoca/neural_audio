@@ -5,3 +5,6 @@ src/neural_audio/utils/scratchpad.ipynb
 # Commit the split folders written by neural_audio.utils.mat_split instead.
 unit_tests/matlab_outputs/aud2cor/*.mat
 unit_tests/matlab_outputs/aud2cor/**/*.mat
+
+# gitignore old tests
+unit_tests/aud2cor_tests.py

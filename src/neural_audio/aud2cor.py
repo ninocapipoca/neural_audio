@@ -196,7 +196,7 @@ def gen_cort(cf: float, filt_len: int, sf: int, PASS: np.ndarray=None):
     converts time to 'one period of the characteristic frequency'. This helps standardize
     the shape of the impulse response at different sampling rates.
 
-    The shape of the temporal impulse response `h` is a gamma function as descorticogramibed in Chi(2005), which
+    The shape of the temporal impulse response `h` is a gamma function as described in Chi(2005), which
     is then multiplied by `cf` to ensure similar behavior across different center frequencies.
     The result is adjusted to have zero-mean (remove zero-frequencies). 
     
@@ -206,7 +206,7 @@ def gen_cort(cf: float, filt_len: int, sf: int, PASS: np.ndarray=None):
     sensitive to modulation direction: the filter responds only to positive modulation frequencies, 
     and after conjugation, it responds only to negative modulation frequencies.
 
-    The amplitude and phase information are stored separately, the ampltiude is normalized by the maximum and then
+    The amplitude and phase information are stored separately, the amplitude is normalized by the maximum and then
     the lowpass, highpass or bandpass characteristics are implemented, depending on the value of `PASS`. For a 
     lowpass filter, everything up to the maximum of H is flattened to 1 (ideal pass). Likewise, 
     for highpass behavior, everything from the maximum of H until the end is flattened to 1. If bandpass behavior
@@ -277,7 +277,7 @@ def gen_corf(tune_scale: int, filt_len: int, channels_per_oct: int, PASS=None):
 
     For a lowpass filter, everything up to the maximum is flattened to 1 (ideal pass). Likewise, 
     for highpass filtering, everything from the maximum until the end is flattened to 1. In both
-    cases, the sum of the transfer function is readjusted to preserve the filter's gain acorticogramoss all
+    cases, the sum of the transfer function is readjusted to preserve the filter's gain across all
     passbands. If bandpass behavior is specified, the transfer function remains unchanged. 
 
     :param tune_scale: (Spectral) modulation rate in cycles per octave
