@@ -19,6 +19,12 @@ def aud2cor(audiogram: np.ndarray,
     :param audiogram: The auditory spectrogram, i.e. the output of ``wav2aud``, of shape :math:`[N, M]`, where :math:`N` is the number of time-frames and :math:`M=128` is the number of frequency channels. Pass it in directly, exactly as returned by ``wav2aud`` (no transpose), matching the MATLAB NSL toolbox convention.
     :type audiogram: numpy.ndarray
 
+    :param frame_length: The length (in milliseconds) of a single time-frame of ``audiogram``, i.e. the same
+        ``frame_length`` that was passed to ``wav2aud``. It sets the frame rate (``1000 / frame_length``, in Hz)
+        against which the temporal filters produced by ``gen_cort`` are defined, so a mismatch with the value used
+        for ``wav2aud`` will misplace the rate axis.
+    :type frame_length: int, optional, default=4
+
     :param temporal_margin: Fullness of the temporal margin; any real value in [0,1].
     :type temporal_margin: float, optional, default=0
 
@@ -225,9 +231,10 @@ def gen_cort(cf: float, filt_len: int, sf: int, PASS: np.ndarray=None):
     :param PASS: Array of shape `[idx, upper_bound]` where `idx` denotes index and `upper_bound` is the maximum 
         value of this index. Dictates passband. 
         If none supplied, defaults to bandpass. Possible values and outcomes:
-            - `idx = 1`: lowpass
-            - `1 < idx < upper_bound` or `None`: bandpass
-            - `idx = upper_bound`: highpass
+
+        - ``idx = 1``: lowpass
+        - ``1 < idx < upper_bound`` or ``None``: bandpass
+        - ``idx = upper_bound``: highpass
     :type PASS: np.ndarray
 
     :returns: numpy.ndarray - Complex-valued filter transfer function (in frequency domain)
@@ -292,9 +299,10 @@ def gen_corf(tune_scale: int, filt_len: int, channels_per_oct: int, PASS=None):
     :param PASS: Array of shape `[idx, upper_bound]` where `idx` denotes index and `upper_bound` is the maximum
         value of this index. Dictates passband.
         If none supplied, defaults to bandpass (`[2, 3]`). Possible values and outcomes:
-            - `idx = 1`: lowpass
-            - `1 < idx < upper_bound`: bandpass
-            - `idx = upper_bound`: highpass
+
+        - ``idx = 1``: lowpass
+        - ``1 < idx < upper_bound``: bandpass
+        - ``idx = upper_bound``: highpass
     :type PASS: np.ndarray, optional, default=None
 
     :returns: np.ndarray - Filter transfer function (in frequency domain)

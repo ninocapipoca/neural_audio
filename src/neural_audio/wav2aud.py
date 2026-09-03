@@ -15,8 +15,8 @@ def wav2aud(x: np.ndarray,
             verbose: bool=False, 
             filters: Dict=dict()) -> Tuple[np.ndarray, np.ndarray, np.ndarray]: 
     
-    """This function computes a biologically inspired spectrogram (also known as audiogram) of an acoustic waveform by simulating the
-    transduction mechanism of the ferret cochlea, following the NSL Matlab toolbox by Yang, Wang and Shamma (1992 and 1994).
+    r"""This function computes a biologically inspired spectrogram (also known as audiogram) of an acoustic waveform by simulating the
+    transduction mechanism of the ferret cochlea, following the NSL Matlab toolbox by Yang, Wang and Shamma (1992 [1]_ and 1994 [2]_).
     
     A section of the cochlea spanning 128 hair-cells with a frequency selectivity calibrated to the range 180-7040Hz (given 
     ``octave_shift=0``) are each simulated by
@@ -38,12 +38,13 @@ def wav2aud(x: np.ndarray,
     :param frame_length: The length (in milliseconds) of a single frame used when convolving ``x`` with the filters. This is equal to the time span 
         of a single output time-frame. Common values: 8, 16, or others powers of two. 
     :type frame_length: int, optional, default=4
-    :param sigmoid_factor: Controlls the non-linear activation function applied to the raw filter outputs.
-    Possible values:
-            - :math:`> 0`: results in the use of a transistor-like sigmoid of the form :math:`\frac{1}{1+e^{-x/sigmoid_factor}}`, where larger values of ``sigmoid_factor`` result in a flatter slope.
-            - :math:`0`: results in the use of a step function centred at zero.
-            - :math:`-1`: results in a rectified linear function of the form :math:`max(0,x)`.
-            - other: results in an identity function.
+    :param sigmoid_factor: Controls the non-linear activation function applied to the raw filter outputs.
+        Possible values:
+
+        - :math:`> 0`: results in the use of a transistor-like sigmoid of the form :math:`\frac{1}{1+e^{-x/sigmoid_factor}}`, where larger values of ``sigmoid_factor`` result in a flatter slope.
+        - :math:`0`: results in the use of a step function centred at zero.
+        - :math:`-1`: results in a rectified linear function of the form :math:`max(0,x)`.
+        - other: results in an identity function.
     :type sigmoid_factor: float, optional, default=-2
     :param time_constant: The non-negative time constant (in milliseconds) used for the temporal integration applied to the output of the 
         lateral inhibition network. If ``time_constant`` :math:`>0`, it results in leaky integration and larger values lead to stronger 
@@ -129,7 +130,7 @@ def wav2aud(x: np.ndarray,
     assert isinstance(verbose, bool), "The verbose parameter should be a boolean."
 
     # Ensure filters are in correct format
-    if len(filters) == 0 or filters == None:
+    if not filters:
 
         # If no filters are specified, load in default filters from file
         cochba_file = Path(__file__).parent / 'examples' / 'filters' / 'cochba_filters.npz'
@@ -198,7 +199,7 @@ def wav2aud(x: np.ndarray,
         if verbose:
             logger.debug(f"processing channel {ch}")
 
-        if len(filters) == 0:
+        if not filters:
             z  = COCHBA[f'zeros_{ch}']
             po = COCHBA[f'poles_{ch}']
             k  = COCHBA[f'gain_{ch}']

@@ -1,0 +1,6 @@
+include LICENSE README.md
+recursive-include src/neural_audio/examples *.wav *.npz
+prune unit_tests
+prune docs/build
+prune dist
+global-exclude __pycache__ *.py[cod]

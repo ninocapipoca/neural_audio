@@ -3,8 +3,21 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to neural_audio's documentation!
+Welcome to NeuralAudio's documentation!
 ========================================
+
+This project is also available on `GitHub <https://github.com/ninocapipoca/neural_audio>`_
+
+Installation
+-----------------
+
+The package is available on `PyPI <https://pypi.org/project/neural-audio/>`_ and can be installed using ``pip install neural-audio``.
+
+Plotting helpers (:mod:`neural_audio.utils.visualize_outputs`) additionally require
+matplotlib, and the MATLAB reference splitting utilities
+(:mod:`neural_audio.utils.mat_split`) require h5py. Install them with
+``pip install neural-audio[plotting,hdf5]``.
+
 
 .. toctree::
    :maxdepth: 2

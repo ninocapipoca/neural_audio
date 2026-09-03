@@ -60,7 +60,7 @@ def gen_temporal_modulations(num_bursts: int=None, duration: int=2, sf: int=1600
     :type sf: int, optional, default=16000
 
     :returns: 1D signal of shape (duration*sf,); for example, if your sampling frequency is 16kHz and you have a duration of
-    2 seconds, your output signal will have length 32kHz.
+        2 seconds, your output signal will have length 32kHz.
     :rtype: numpy.ndarray
     """
     t = np.arange(0, duration, 1/sf) 
@@ -102,7 +102,7 @@ def gen_spectral_modulations(num_sinusoids: int=6,
     :type sf: int, optional, default=16000
 
     :returns: 1D signal of shape (duration*sf,); for example, if your sampling frequency is 16kHz and you have a duration of
-    2 seconds, your output signal will have length 32kHz.
+        2 seconds, your output signal will have length 32kHz.
     :rtype: numpy.ndarray
 
     .. warning:: If you plan on using this signal with ``wav2aud`` make sure that the maximum and minimum frequencies are
@@ -126,7 +126,7 @@ def gen_ripple(rate: float,
                f_max: float = 7040,
                seed: int = 0) -> np.ndarray:
     r"""
-    Generates a sinusoidal ripple stimulus following the description in Chi et al. (2005), caption of Fig. 1(b):
+    Generates a sinusoidal ripple stimulus following the description in Chi et al. (2005) [1]_, caption of Fig. 1(b):
 
     :math:`S(t, x) = 1 + \sin (2\pi(wt + \Omega x))`
 
