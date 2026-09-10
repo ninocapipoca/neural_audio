@@ -7,7 +7,7 @@ This package is available on [PyPI](https://pypi.org/project/neural-audio/) can 
 
 ## Key functions
 - `wav2aud` permits the user to produce a spectrogram ('audiogram') in which each row represents the average spike count carried by an auditory nerve fiber
-- `aud2cor` represents auditory information along four dimensions : scale, rate, time and frequency. This outputs a 4D complex-valued matrix stored in a binary file. Currently under development.
+- `aud2cor` represents auditory information along four dimensions : scale, rate, time and frequency. This outputs a 4D complex-valued matrix stored in a binary file. 
 
 ### Important to note
  - When filter coefficients were exported from MATLAB as a CSV and loaded in directly, they resulted in filters with significant numerical instability, even when using `sosfilt`. They were then exported in `zpk` format and this seemed to fix the problem, but the reason for this is unclear.
