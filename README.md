@@ -21,3 +21,6 @@ The plotting helpers additionally require matplotlib, and the MATLAB reference s
 
 ## Tutorials and documentation
 Tutorials provide narrative explanations of how functions and their parameters work, alongside sample code and corresponding output. The objective is to help the user get a quick practical grasp of how to use the toolbox. They can be found in the **tutorials** folder. For more details, documentation is also available via [ReadTheDocs](https://neural-audio.readthedocs.io/en/latest/).
+
+### Note on AI usage
+While Claude Code was used to assist this project, much of the code is still hand-written, or was verified carefully by a human. The tutorials and technical explanations were human-written and verified for accuracy as best we could.
