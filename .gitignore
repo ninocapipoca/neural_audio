@@ -1,1 +1,23 @@
-__pycache__/sigmoid.cpython-312.pyc
+# Byte-compiled / cache
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Build artefacts
+build/
+dist/
+*.egg-info/
+
+# Generated documentation
+docs/build/
+
+# Scratch files
+tmp
+.venv/
+src/neural_audio/utils/scratchpad.ipynb
+tutorials/scratchpad.ipynb
+
+# Original MATLAB cortical references are too large for GitHub (hundreds of MB each).
+# Commit the split folders written by neural_audio.utils.mat_split instead.
+unit_tests/matlab_outputs/aud2cor/*.mat
+unit_tests/matlab_outputs/aud2cor/**/*.mat
