@@ -1,0 +1,44 @@
+{
+  "source": "cr_halfres_ripple_stim_1.mat",
+  "dataset": "cr",
+  "shape": [
+    128,
+    500,
+    32,
+    16
+  ],
+  "split_axis": 0,
+  "dtype": "complex64",
+  "source_dtype": "complex128",
+  "parts": [
+    {
+      "file": "part_000.h5",
+      "start": 0,
+      "stop": 40,
+      "bytes": 77702208,
+      "sha256": "c60c987182cd81bc86fa8f3a29286629fc5c13afbd923e650288b3970d59bbf7"
+    },
+    {
+      "file": "part_001.h5",
+      "start": 40,
+      "stop": 80,
+      "bytes": 77875774,
+      "sha256": "4448d54279f9939a119e5ee0ab8410a1c71bc16406d134d0560d33a382f059b5"
+    },
+    {
+      "file": "part_002.h5",
+      "start": 80,
+      "stop": 120,
+      "bytes": 77780623,
+      "sha256": "b5baf3bd767d51047ecd4c7be73a0ca99de567456640fb1b1920619b90b2a7a3"
+    },
+    {
+      "file": "part_003.h5",
+      "start": 120,
+      "stop": 128,
+      "bytes": 15442844,
+      "sha256": "5d392e6ed52c93dbc569c78768e4fda6eab86d658325c045a684ed1c9777f2ef"
+    }
+  ],
+  "source_sha256": "a24d04d5192d5bdf483c8c9a08cdab38773a78ac33dc897a7506f1d54b0bdba0"
+}

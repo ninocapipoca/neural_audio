@@ -1,0 +1,58 @@
+{
+  "source": "cr_halfres_glass tapping.mat",
+  "dataset": "cr",
+  "shape": [
+    128,
+    750,
+    32,
+    16
+  ],
+  "split_axis": 0,
+  "dtype": "complex64",
+  "source_dtype": "complex128",
+  "parts": [
+    {
+      "file": "part_000.h5",
+      "start": 0,
+      "stop": 24,
+      "bytes": 69534369,
+      "sha256": "efcc0e914fc4c2aa7a8bc2a7f12bf60a9dd4e7ed76c112c699f95ededf819138"
+    },
+    {
+      "file": "part_001.h5",
+      "start": 24,
+      "stop": 48,
+      "bytes": 69742982,
+      "sha256": "4021055a0c6fcaa80c29ddb003597e5c16005a6ab2d391f985a8e7fb11b3885e"
+    },
+    {
+      "file": "part_002.h5",
+      "start": 48,
+      "stop": 72,
+      "bytes": 69670758,
+      "sha256": "89acc5299fbab9b7daed13516290dbea6f14fd7b2ac9395445c0efc02d1e07da"
+    },
+    {
+      "file": "part_003.h5",
+      "start": 72,
+      "stop": 96,
+      "bytes": 69851227,
+      "sha256": "8aa9786c1b2fa9bbec3c4c6f421dbba216bd33deae000ad72b4bd96dd3977f54"
+    },
+    {
+      "file": "part_004.h5",
+      "start": 96,
+      "stop": 120,
+      "bytes": 69980909,
+      "sha256": "fc6de4b14e73ac7a7ffdf45632ab17de0e910f102e141f914eee68cda599a26e"
+    },
+    {
+      "file": "part_005.h5",
+      "start": 120,
+      "stop": 128,
+      "bytes": 23350528,
+      "sha256": "f983099e12c3791df2810784526e10dd5919e499fdaf95860f6b0540cdd569f6"
+    }
+  ],
+  "source_sha256": "3ac96a8c7048201bffc466561375677766ea54f11c243da65aef9f94ad64fa15"
+}

@@ -5,6 +5,11 @@ This toolbox is an implementation of an auditory model of the cochlea as develop
 ## Installation
 This package is available on [PyPI](https://pypi.org/project/neural-audio/) can be installed using `pip install neural-audio`
 
+## Installation
+This package is available on [PyPI](https://pypi.org/project/neural-audio/) and can be installed using `pip install neural-audio`
+
+The plotting helpers additionally require matplotlib, and the MATLAB reference splitting utilities require h5py. To install those too, use `pip install "neural-audio[plotting,hdf5]"`
+
 ## Key functions
 - `wav2aud` permits the user to produce a spectrogram ('audiogram') in which each row represents the average spike count carried by an auditory nerve fiber
 - `aud2cor` represents auditory information along four dimensions : scale, rate, time and frequency. This outputs a 4D complex-valued matrix stored in a binary file. 

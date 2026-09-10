@@ -15,8 +15,8 @@ def wav2aud(x: np.ndarray,
             verbose: bool=False, 
             filters: Dict=dict()) -> Tuple[np.ndarray, np.ndarray, np.ndarray]: 
     
-    """This function computes a biologically inspired spectrogram (also known as audiogram) of an acoustic waveform by simulating the 
-    transduction mechanism of the ferret cochlea, following the NSL Matlab toolbox by Yang, Wang and Shamma (1992 and 1994).
+    """This function computes a biologically inspired spectrogram (also known as audiogram) of an acoustic waveform by simulating the
+    transduction mechanism of the ferret cochlea, following the NSL Matlab toolbox by Yang, Wang and Shamma (1992 [1]_ and 1994 [2]_).
     
     A section of the cochlea spanning 128 hair-cells with a frequency selectivity calibrated to the range 180-7040Hz (given
     ``octave_shift=0``) are each simulated by:
@@ -29,7 +29,7 @@ def wav2aud(x: np.ndarray,
     
     :param x: The input waveform as a 1-D time-series of audio samples with a maximum sampling frequency of 16kHz. The use of lower 
         sampling rates is supported and has to be specified using the ``octave_shift`` parameter. Note, if the length of ``x`` is not
-        an integer multiple of ``frame_length``, then ``x`` will be pre-padded with zeros to round up the length to that next integer multiple.
+        an integer multiple of ``frame_length``, then zeros will be appended to the end of ``x`` to round up the length to that next integer multiple.
     :type x: numpy.ndarray
     :param octave_shift: At a default sampling rate of 16kHz, the simulated hair-cells span a frequency range of 180-7040 Hz, corresponding 
         to the 64 musical notes F#3-A8 whereby each note is covered by two hair-cells. These :math:`\\approx 5.3` octaves will be shifted if the sampling rate
@@ -40,14 +40,12 @@ def wav2aud(x: np.ndarray,
         of a single output time-frame. Common values: 8, 16, or others powers of two. 
     :type frame_length: int, optional, default=4
     :param sigmoid_factor: Controls the non-linear activation function applied to the raw filter outputs.
+        Possible values:
 
-        The possible values are:
-
-        * :math:`> 0` -- uses a transistor-like sigmoid of the form :math:`\\frac{1}{1+e^{-x / \\mathrm{sigmoid\\_factor}}}` where larger values of ``sigmoid_factor`` result in a flatter slope.
-        * :math:`0` -- uses a step function centred at zero.
-        * :math:`-1` -- uses a rectified linear function of the form :math:`\\max(0, x)`.
-        * other -- uses the identity function.
-
+        - :math:`> 0`: results in the use of a transistor-like sigmoid of the form :math:`\frac{1}{1+e^{-x/sigmoid_factor}}`, where larger values of ``sigmoid_factor`` result in a flatter slope.
+        - :math:`0`: results in the use of a step function centred at zero.
+        - :math:`-1`: results in a rectified linear function of the form :math:`max(0,x)`.
+        - other: results in an identity function.
     :type sigmoid_factor: float, optional, default=-2
     :param time_constant: The non-negative time constant (in milliseconds) used for the temporal integration applied to the output of the 
         lateral inhibition network. If ``time_constant`` :math:`>0`, it results in leaky integration and larger values lead to stronger 
@@ -77,9 +75,9 @@ def wav2aud(x: np.ndarray,
              
     :type filters: dict, optional
 
-    :returns: - `frequencies` (numpy.ndarray) - The :math:`M=128` characteristic frequencies of the simulated hair-cells in Hz.
-            - `time_points` (numpy.ndarray) - The :math:`N=ceil(len(x) / frame_length)` time points corresponding to the center of each output frame in seconds.
-            - `audiogram` (numpy.ndarray) - The auditory spectrogram of shape [:math:`[M,N]`], where :math:`M=128` is the number of frequency channels and :math:`N=ceil(len(x) / frame_length)` is the number of time-frames.
+    :returns: `frequencies` (numpy.ndarray) - The :math:`M=128` characteristic frequencies of the simulated hair-cells in Hz.
+    :returns: `time_points' (numpy.ndarray) - The :math:`N=ceil(len(x) / frame_length)` time points corresponding to the center of each output frame in seconds.
+    :returns: `audiogram` (numpy.ndarray) - The auditory spectrogram of shape :math:`[N, M]`, where :math:`N=ceil(len(x) / frame\_length)` is the number of time-frames and :math:`M=128` is the number of frequency channels. This follows the MATLAB NSL toolbox convention (time along the rows, frequency along the columns), so ``audiogram`` can be passed straight into ``aud2cor`` without transposing.
     
     Example::
 
@@ -133,7 +131,7 @@ def wav2aud(x: np.ndarray,
     assert isinstance(verbose, bool), "The verbose parameter should be a boolean."
 
     # Ensure filters are in correct format
-    if len(filters) == 0 or filters == None:
+    if not filters:
 
         # If no filters are specified, load in default filters from file
         cochba_file = Path(__file__).parent / 'examples' / 'filters' / 'cochba_filters.npz'
@@ -198,11 +196,11 @@ def wav2aud(x: np.ndarray,
 
 
     # --- Remaining channels (high -> low frequency) ---
-    for ch in range(M-2, 0, -1):
+    for ch in range(M-2, -1, -1):
         if verbose:
             logger.debug(f"processing channel {ch}")
 
-        if len(filters) == 0:
+        if not filters:
             z  = COCHBA[f'zeros_{ch}']
             po = COCHBA[f'poles_{ch}']
             k  = COCHBA[f'gain_{ch}']
@@ -248,7 +246,8 @@ def wav2aud(x: np.ndarray,
     time_points = (np.arange(N) + 0.5) * frame_length / 1000  # in seconds
 
     if verbose:
-        logger.debug(f"Finished processing. \n\t-Output audiogram shape: {audiogram.shape}, \n\t-time points shape: {time_points.shape}, \n\t-characteristic frequencies: {frequencies[0]} - {frequencies[0]}Hz.")
+        logger.debug(f"Finished processing. \n\t-Output audiogram shape (time-frames, frequency channels): {audiogram.shape}, \n\t-time points shape: {time_points.shape}, \n\t-characteristic frequencies: {frequencies[0]} - {frequencies[-1]}Hz.")
 
     # Outputs
-    return time_points, frequencies, audiogram.T
+    # NOTE - changed audiogram.T to audiogram
+    return time_points, frequencies, audiogram 

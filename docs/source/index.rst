@@ -13,6 +13,11 @@ Installation
 
 The package is available on `PyPI <https://pypi.org/project/neural-audio/>`_ and can be installed using ``pip install neural-audio``.
 
+Plotting helpers (:mod:`neural_audio.utils.visualize_outputs`) additionally require
+matplotlib, and the MATLAB reference splitting utilities
+(:mod:`neural_audio.utils.mat_split`) require h5py. Install them with
+``pip install neural-audio[plotting,hdf5]``.
+
 
 .. toctree::
    :maxdepth: 2

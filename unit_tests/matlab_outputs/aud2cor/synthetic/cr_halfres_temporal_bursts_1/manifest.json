@@ -1,0 +1,44 @@
+{
+  "source": "cr_halfres_temporal_bursts_1.mat",
+  "dataset": "cr",
+  "shape": [
+    128,
+    500,
+    32,
+    16
+  ],
+  "split_axis": 0,
+  "dtype": "complex64",
+  "source_dtype": "complex128",
+  "parts": [
+    {
+      "file": "part_000.h5",
+      "start": 0,
+      "stop": 40,
+      "bytes": 78269149,
+      "sha256": "5819606b4ee01c4d96204066407fb4350ab9d0a4bb08f909f4e30b5748a35fba"
+    },
+    {
+      "file": "part_001.h5",
+      "start": 40,
+      "stop": 80,
+      "bytes": 78468267,
+      "sha256": "73ed1bba6e21ddca33f094c93f2c39b26dc77aa54fec96cc1c649c6fb34ecfbf"
+    },
+    {
+      "file": "part_002.h5",
+      "start": 80,
+      "stop": 120,
+      "bytes": 78497807,
+      "sha256": "f22760735fbab1c70e71c405318b9c680b9f8b875b63392f0244a91a304df128"
+    },
+    {
+      "file": "part_003.h5",
+      "start": 120,
+      "stop": 128,
+      "bytes": 15619265,
+      "sha256": "a2bb6f1796e75d1e80b3e6253baae233369e20637b701d4a92b97e725d815df1"
+    }
+  ],
+  "source_sha256": "77ac7e2b48e6a93a9185c81258bc51f68b1ae0b818210060e66545721e9298d2"
+}
