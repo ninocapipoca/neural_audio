@@ -42,12 +42,13 @@ def sigmoid(y: np.ndarray, fac:int) -> np.ndarray:
         return y
 
 
-def gen_temporal_modulations(num_bursts: int=None, duration: int=2, sf: int=16000) -> np.ndarray:
+def gen_temporal_modulations(num_bursts: int | None = None, duration: int = 2,
+                             sf: int = 16000) -> np.ndarray:
     """
-    Generates a signal with only temporal modulations - every frequency is present but only at infinitesimally 
-    small, evenly spaced bursts. 
-    
-    Useful to build test cases or for early exploration of the toolbox.
+    Generates a signal with only temporal modulations where every frequency is present in short bursts.
+
+    .. warning:: This signal is highly artificial and prone to artefacts. Thus, it is not recommended to use
+        with the toolbox, except to test its limitations.
 
     :param num_bursts: The number of bursts in the signal. If none specified, is set to ``np.ceil(duration/5)``
     :type num_bursts: int, optional, default=None
@@ -81,8 +82,7 @@ def gen_spectral_modulations(num_sinusoids: int=6,
                              duration: int=2, 
                              sf: int=16000) -> np.ndarray:
     """
-    Generates a signal with only spectral modulations - different frequencies are present but they are constant in time.
-    Useful to build test cases or for early exploration of the toolbox.
+    Generates a signal with only spectral modulations; different frequencies are present but they are constant in time.
 
     :param num_sinusoids: The number of different frequencies present in the signal. These will be linearly spaced on the 
         log scale.
@@ -165,16 +165,6 @@ def gen_ripple(rate: float,
     :returns: 1D signal of shape (duration*sf,).
     :rtype: numpy.ndarray
 
-    .. note:: Two design choices work together to suppress interference artefacts in the audiogram.
-        First, each carrier is given a random starting phase (rather than all starting in phase at
-        :math:`t=0`), which prevents coherent onset transients from producing a deterministic,
-        frequency-swept interference ("fingerprint") pattern near the onset. Second, the carrier
-        grid is deliberately dense (1024 log-spaced carriers): adjacent carriers that fall within
-        the same cochlear filter's bandwidth beat at their frequency difference regardless of phase,
-        so many carriers per filter are needed for those pair-beats to add incoherently and integrate
-        out. Together these approximate the broadband-noise carrier described by Chi et al. (2005)
-        and leave only the intended diagonal ripple.
-
     .. rubric:: References
 
     .. [1] Chi, Taishih & Ru, Powen & Shamma, Shihab (2005),
@@ -182,17 +172,15 @@ def gen_ripple(rate: float,
         The Journal of the Acoustical Society of America, 118, 887-906,
         10.1121/1.1945807
     """
-    num_channels = 1024  # dense enough that pair-beats within a cochlear filter cancel (see note)
+    num_channels = 1024  # dense to avoid artefacts
     t = np.arange(0, duration, 1 / sf)
     freqs = np.geomspace(f_min, f_max, num_channels)
     rel_pos = np.log2(freqs / f_min)  # position in octaves, 0 at f_min
 
-    # random per-carrier phases so carriers do not all cohere at t=0 (see note)
+    # random per-carrier phases so carriers do not all cohere at t=0
     rng = np.random.default_rng(seed)
     carrier_phases = rng.uniform(0, 2 * np.pi, size=num_channels)
 
-    # Pre-compute the shared 2*pi*t factor and the time part of the ripple envelope
-    # argument (independent of the carrier index), so the loop only does per-carrier work.
     tau = 2 * np.pi * t
     env_time = rate * tau
 
@@ -205,16 +193,14 @@ def gen_ripple(rate: float,
 
 def gen_temporal_modulations_rate(rate: float, duration: float = 2, sf: int = 16000,
                                   carrier_freq: float = 1000, depth: float = 1.0, ramp: bool = False, 
-                                  ramp_frac: float = 0.05, clip=True) -> np.ndarray:
+                                  ramp_frac: float = 0.05, clip: bool = True) -> np.ndarray:
     """
     Generates a signal containing only temporal modulations at a specified
     modulation rate.
 
     A pure-tone carrier is amplitude-modulated by a sinusoidal envelope at
-    ``rate`` Hz. Because the carrier is a single frequency, the modulation
-    appears in one horizontal band of the audiogram (the channels tuned near
-    ``carrier_freq``). The sinusoidal envelope produces smooth temporal
-    modulation without the sharp broadband onsets of an impulse train.
+    ``rate`` Hz. This produces smooth temporal modulation without the step-function-like behavior of short bursts 
+    as in ``gen_temporal_modulations``.
 
     :param rate: Temporal modulation rate in Hz.
     :type rate: float

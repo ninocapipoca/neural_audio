@@ -63,7 +63,6 @@ def log(message):
 
 
 def construct_cases_audio():
-
     # associates an audio file with the corresponding matlab output for natural sounds
     out = []
     for sound_file in load_sound_file_paths():

@@ -10,19 +10,15 @@ import os
 import sys
 from importlib.metadata import PackageNotFoundError, version as _version
 
-# If extensions (or modules to document with autodoc) are in another directory,
-# add these directories to sys.path here. If the directory is relative to the
-# documentation root, use os.path.abspath to make it absolute, like shown here.
 sys.path.insert(0, os.path.abspath('../../src'))
 
 # -- Project information -----------------------------------------------------
 
 project = 'neural_audio'
-copyright = '2026, CNM'
+copyright = '2026, CLNM'
 author = 'C L Nina Matos'
 
-# The full version, including alpha/beta/rc tags. Read from the installed
-# package so it cannot drift from the version declared in pyproject.toml.
+# Make sure version stays up to date
 try:
     release = _version('neural_audio')
 except PackageNotFoundError:
@@ -31,9 +27,7 @@ except PackageNotFoundError:
 
 # -- General configuration ---------------------------------------------------
 
-# Add any Sphinx extension module names here, as strings. They can be
-# extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
-# ones.
+# Sphinx extension modules
 extensions = [
     'sphinx.ext.todo',
     'sphinx.ext.viewcode',
@@ -43,20 +37,24 @@ extensions = [
     'sphinx.ext.mathjax',
 ]
 
+# Show function names cleanly
+add_module_names = False
+toc_object_entries_show_parents = 'hide'
+
+# Render default values as they are written in the source (np.complex64) rather their repr (<class 'numpy.complex64'>)
+autodoc_preserve_defaults = True
+
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3', None),
     'numpy': ('https://numpy.org/doc/stable/', None),
     'scipy': ('https://docs.scipy.org/doc/scipy/', None),
+    'matplotlib': ('https://matplotlib.org/stable/', None),
 }
 
-# List of patterns, relative to source directory, that match files and
-# directories to ignore when looking for source files.
-# This pattern also affects html_static_path and html_extra_path.
+# Directories to ignore when looking for source files
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
 
 # -- Options for HTML output -------------------------------------------------
 
-# The theme to use for HTML and HTML Help pages.  See the documentation for
-# a list of builtin themes.
 html_theme = 'sphinx_rtd_theme'

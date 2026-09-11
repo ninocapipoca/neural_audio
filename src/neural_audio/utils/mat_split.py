@@ -32,7 +32,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from pathlib import Path
 
 import h5py
@@ -83,7 +83,7 @@ def _check_source(source: str) -> str:
     return source
 
 
-def split_dir_for(mat_path) -> Path:
+def split_dir_for(mat_path: str | Path) -> Path:
     """Folder that holds (or would hold) the split parts of ``mat_path``.
 
     ``.../cr_halfres_geese.mat`` maps to ``.../cr_halfres_geese``.
@@ -125,7 +125,7 @@ def _read_complex_slab(dataset: h5py.Dataset, axis: int, start: int, stop: int,
     return slab
 
 
-def _slab_width(shape, axis: int, itemsize: int, max_bytes: int,
+def _slab_width(shape: tuple[int, ...], axis: int, itemsize: int, max_bytes: int,
                 chunk_extent: int) -> int:
     """Number of indices along ``axis`` that fit in ``max_bytes``.
 
@@ -149,15 +149,15 @@ def _slab_width(shape, axis: int, itemsize: int, max_bytes: int,
     return int(min(width, shape[axis]))
 
 
-def split_mat_file(mat_path, *, dataset: str = 'cr', axis: int = 0,
-                   max_bytes: int = MAX_PART_BYTES, dtype=np.complex64,
+def split_mat_file(mat_path: str | Path, *, dataset: str = 'cr', axis: int = 0,
+                   max_bytes: int = MAX_PART_BYTES, dtype: np.dtype | type = np.complex64,
                    overwrite: bool = False, checksum: bool = True,
                    progress: Callable[[str], None] | None = None) -> Path:
     """Split one ``.mat`` file into a folder of sub-100 MB HDF5 parts.
 
     Parameters
     ----------
-    mat_path : path-like
+    mat_path : str or pathlib.Path
         The v7.3 ``.mat`` file to split.
     dataset : str
         Name of the dataset inside the file. The aud2cor references store one array
@@ -167,14 +167,14 @@ def split_mat_file(mat_path, *, dataset: str = 'cr', axis: int = 0,
         128 frequency channels.
     max_bytes : int
         Target ceiling for each part, uncompressed.
-    dtype : numpy dtype
+    dtype : numpy.dtype
         Dtype the parts are stored in. ``complex64`` halves the size relative to MATLAB's
         ``complex128`` and is far more precise than the tests' tolerance requires.
     overwrite : bool
         Replace an existing split folder instead of raising.
     checksum : bool
         Record sha256 digests of the source and each part in the manifest.
-    progress : callable, optional
+    progress : collections.abc.Callable, optional
         Called with one line per part as it is written, and once more when the manifest
         lands. Pass ``print`` to watch a long split.
 
@@ -295,8 +295,8 @@ def split_mat_file(mat_path, *, dataset: str = 'cr', axis: int = 0,
     return out_dir
 
 
-def split_mat_directory(root, *, threshold_bytes: int = SPLIT_THRESHOLD_BYTES,
-                        verbose: bool = True, **kwargs) -> list[Path]:
+def split_mat_directory(root: str | Path, *, threshold_bytes: int = SPLIT_THRESHOLD_BYTES,
+                        verbose: bool = True, **kwargs: object) -> list[Path]:
     """Split every ``.mat`` under ``root`` that is larger than ``threshold_bytes``.
 
     Recurses into subdirectories, so ``matlab_outputs/aud2cor`` covers ``synthetic/`` too.
@@ -331,7 +331,8 @@ def split_mat_directory(root, *, threshold_bytes: int = SPLIT_THRESHOLD_BYTES,
     return written
 
 
-def load_split_mat(part_dir, *, dataset: str | None = None, dtype=None,
+def load_split_mat(part_dir: str | Path, *, dataset: str | None = None,
+                   dtype: np.dtype | type | None = None,
                    progress: Callable[[str], None] | None = None) -> np.ndarray:
     """Rebuild the full array from a folder written by :func:`split_mat_file`.
 
@@ -401,7 +402,8 @@ def load_split_mat(part_dir, *, dataset: str | None = None, dtype=None,
     return out
 
 
-def load_cortical_reference(mat_path, *, dataset: str = 'cr', dtype=None,
+def load_cortical_reference(mat_path: str | Path, *, dataset: str = 'cr',
+                            dtype: np.dtype | type | None = None,
                             source: str = 'split',
                             progress: Callable[[str], None] | None = None) -> np.ndarray:
     """Load a MATLAB reference in the form named by ``source``.
@@ -462,7 +464,7 @@ def load_cortical_reference(mat_path, *, dataset: str = 'cr', dtype=None,
     )
 
 
-def reference_exists(mat_path, *, source: str = 'split') -> bool:
+def reference_exists(mat_path: str | Path, *, source: str = 'split') -> bool:
     """True when a reference is available in the form named by ``source``.
 
     Mirrors :func:`load_cortical_reference`, so a caller can guard with the same policy it
@@ -479,7 +481,7 @@ def reference_exists(mat_path, *, source: str = 'split') -> bool:
     return have_parts or mat_path.is_file()
 
 
-def _main(argv=None) -> int:
+def _main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description='Split oversized MATLAB v7.3 .mat files into GitHub-sized parts.',
     )
