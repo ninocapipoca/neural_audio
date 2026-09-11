@@ -62,7 +62,6 @@ Homepage = "https://github.com/ninocapipoca/neural_audio"
 Documentation = "https://neural-audio.readthedocs.io/en/latest/"
 "Bug Tracker" = "https://github.com/ninocapipoca/neural_audio/issues"
 
-"Homepage" = "https://pypi.org/project/neural_audio/"
 [tool.setuptools]
 package-dir = { "" = "src" }
 

@@ -34,7 +34,7 @@ def wav2aud(x: np.ndarray,
     :param octave_shift: At a default sampling rate of 16kHz, the simulated hair-cells span a frequency range of 180-7040 Hz, corresponding 
         to the 64 musical notes F#3-A8 whereby each note is covered by two hair-cells. These :math:`\\approx 5.3` octaves will be shifted if the sampling rate
         of ``x`` deviates from its default. In particular, choose sampling rate and ``octave_shift`` in line with the identity
-        :math:`sampling_rate = 16K * 2^{octave_shift}`. For example, set ``octave_shift`` to :math:`-1` for an 8 kHz sampling rate.
+        `sampling_rate = 16K * 2^{octave_shift}`. For example, set ``octave_shift`` to :math:`-1` for an 8 kHz sampling rate.
     :type octave_shift: int, optional, default=0
     :param frame_length: The length (in milliseconds) of a single frame used when convolving ``x`` with the filters. This is equal to the time span 
         of a single output time-frame. Common values: 8, 16, or others powers of two. 
@@ -48,15 +48,16 @@ def wav2aud(x: np.ndarray,
         - other: results in an identity function.
     :type sigmoid_factor: float, optional, default=-2
     :param time_constant: The non-negative time constant (in milliseconds) used for the temporal integration applied to the output of the 
-        lateral inhibition network. If ``time_constant`` :math:`>0`, it results in leaky integration and larger values lead to stronger 
+        lateral inhibition network. If ``time_constant > 0``, it results in leaky integration and larger values lead to stronger 
         temporal smoothing of the output. If it is set to :math:`0`, it results in simple averaging of the sub-samples within a single output time-frame. 
     :type time_constant: int, optional, default=0
     :param verbose: If ``True``, prints summary of configuration, inferred sampling-rate and logs per-channel progress at the DEBUG console.
     :type verbose: bool, optional, default=False
-    :param filters: If the method should use custom filters instead of the default ones, they can be specified with this dictionary. It is expected to have key:value pairs
-            - 'zeros' : A numpy.ndarray for transfer function zeros with dimensions (maximum number of zeros, 129 filters), ordered by characteristic frequency in ascending fashion.
-            - 'poles' : A numpy.ndarray for transfer function zeros with dimensions (maximum number of poles, 129 filters), ordered by characteristic frequency in ascending fashion.
-            - 'gain' : A numpy.ndarray array of length equal to the number of filters, ordered by characteristic frequency in ascending fashion. 
+    :param filters: 
+            If the method should use custom filters instead of the default ones, they can be specified with this dictionary. It is expected to have key:value pairs
+            - ``zeros`` : A numpy.ndarray for transfer function zeros with dimensions (maximum number of zeros, 129 filters), ordered by characteristic frequency in ascending fashion.
+            - ``poles`` : A numpy.ndarray for transfer function zeros with dimensions (maximum number of poles, 129 filters), ordered by characteristic frequency in ascending fashion.
+            - ``gain`` : A numpy.ndarray array of length equal to the number of filters, ordered by characteristic frequency in ascending fashion. 
 
 
         For example, for a filter-bank with 3 filters where the first one has 2 zeros, the second has 5 and the third
@@ -75,10 +76,11 @@ def wav2aud(x: np.ndarray,
              
     :type filters: dict, optional
 
-    :returns: `frequencies` (numpy.ndarray) - The :math:`M=128` characteristic frequencies of the simulated hair-cells in Hz.
-    :returns: `time_points' (numpy.ndarray) - The :math:`N=ceil(len(x) / frame_length)` time points corresponding to the center of each output frame in seconds.
-    :returns: `audiogram` (numpy.ndarray) - The auditory spectrogram of shape :math:`[N, M]`, where :math:`N=ceil(len(x) / frame\_length)` is the number of time-frames and :math:`M=128` is the number of frequency channels. This follows the MATLAB NSL toolbox convention (time along the rows, frequency along the columns), so ``audiogram`` can be passed straight into ``aud2cor`` without transposing.
-    
+    :returns: 
+            - ``frequencies`` (numpy.ndarray) - The ``M=128`` characteristic frequencies of the simulated hair-cells in Hz.
+            - ``time_points`` (numpy.ndarray) - The ``N=ceil(len(x) / frame_length)`` time points corresponding to the center of each output frame in seconds.
+            - ``audiogram`` (numpy.ndarray) - The auditory spectrogram of shape ``[N, M]``, where ``N=ceil(len(x) / frame_length)`` is the number of time-frames and ``M=128`` is the number of frequency channels. This follows the MATLAB NSL toolbox convention (time along the rows, frequency along the columns), so ``audiogram`` can be passed straight into ``aud2cor`` without transposing.
+        
     Example::
 
         import numpy as np
