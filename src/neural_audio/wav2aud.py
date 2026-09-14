@@ -76,9 +76,9 @@ def wav2aud(x: np.ndarray,
     :type filters: dict, optional
 
     :returns:
-
-        - ``frequencies`` (numpy.ndarray) - The ``M=128`` characteristic frequencies of the simulated hair-cells in Hz.
+                
         - ``time_points`` (numpy.ndarray) - The ``N=ceil(len(x) / frame_length)`` time points corresponding to the center of each output frame in seconds.
+        - ``frequencies`` (numpy.ndarray) - The ``M=128`` characteristic frequencies of the simulated hair-cells in Hz.
         - ``audiogram`` (numpy.ndarray) - The auditory spectrogram of shape ``[N, M]``, where ``N=ceil(len(x) / frame_length)`` is the number of time-frames and ``M=128`` is the number of frequency channels. This follows the MATLAB NSL toolbox convention (time along the rows, frequency along the columns), so ``audiogram`` can be passed straight into ``aud2cor`` without transposing.
     :rtype: tuple of numpy.ndarray
         
@@ -252,5 +252,4 @@ def wav2aud(x: np.ndarray,
         logger.debug(f"Finished processing. \n\t-Output audiogram shape (time-frames, frequency channels): {audiogram.shape}, \n\t-time points shape: {time_points.shape}, \n\t-characteristic frequencies: {frequencies[0]} - {frequencies[-1]}Hz.")
 
     # Outputs
-    # NOTE - changed audiogram.T to audiogram
     return time_points, frequencies, audiogram 

@@ -7,43 +7,85 @@ from matplotlib.figure import Figure
 from pathlib import Path
 from scipy.io import wavfile
 
+def to_decibel(x: np.ndarray, vmin: float | None = None, normalize: bool = False) -> np.ndarray:
+    """Convert an array of magnitudes to decibels.
+
+    The decibel scale is referenced to a magnitude of 1.0, so magnitudes below
+    1.0 come out negative. Pass ``normalize=True`` for the peak-relative
+    scale instead.
+
+    :param x: Array of magnitudes. Values at or below zero are clipped to a small positive
+        constant (1e-9) beforehand to avoid taking the log of zero.
+    :type x: numpy.ndarray
+
+    :param vmin: Floor, in decibels. Values below it are clipped up to it. Useful because the
+        1e-9 clip maps exact zeros to -180 dB, which stretches a colour scale over a range far
+        wider than the content occupies. ``None`` applies no floor.
+    :type vmin: float, optional, default=None
+
+    :param normalize: If ``True``, express the magnitudes relative to the largest value in
+        ``x``, so that the peak becomes 0 dB and every other value is negative.
+    :type normalize: bool, optional, default=False
+
+    :returns: The input converted to decibels, same shape as ``x``.
+    :rtype: numpy.ndarray
+    """
+
+    magnitude = np.maximum(x, 1e-9)
+
+    if normalize:
+        magnitude = magnitude / magnitude.max()
+
+    decibels = 20 * np.log10(magnitude)
+
+    if vmin is not None:
+        decibels = np.maximum(decibels, vmin)
+
+    return decibels
+
+
 def plot_spectrogram(matrix: np.ndarray,
                       time_points: np.ndarray,
                       frequencies: np.ndarray,
-                      title: str='Spectrogram') -> None:
-    """Plots a spectrogram-like matrix (e.g. an audiogram such as the output of `wav2aud`) on a log-scaled
-    frequency axis, with magnitude converted to decibels.
+                      title: str='Spectrogram',
+                      vmin: float | None = None,
+                      normalize: bool = False) -> None:
+    
+    """Plots a spectrogram-like matrix on a log-scaled frequency axis, with magnitude converted to decibels. Designed
+    to work for both a regular spectrogram and for an audiogram as produced by ``wav2aud``.
 
-    The frequency axis is displayed on a base-2 log scale so that octave spacing appears linear,
-    which is useful for comparing against auditory/cortical representations where frequency channels
-    are log-spaced. ``pcolormesh`` is used rather than ``imshow`` so that linearly-spaced FFT bins
+    The frequency axis is displayed on a base-2 log scale so that octave spacing appears linear.
+    ``pcolormesh`` is used rather than ``imshow`` so that linearly-spaced FFT bins
     can be mapped onto this log-scaled axis correctly.
 
     This function draws onto the current matplotlib axes and does not create a new figure or call
     ``plt.show()`` itself, so it can be used with ``plt.subplot`` to place multiple spectrograms side
-    by side or stacked, e.g.:
+    by side or stacked.
 
+    .. note:: The argument ``matrix`` is expected to be of shape ``[timepoints, frequencies]``, matching
+        the shape of ``wav2aud``'s output. A regular spectrogram, for example as returned by ``scipy.signal.spectrogram``,
+        has the opposite arrangement, so its transpose will need to be passed instead.
+
+    Example usage:
     .. code-block:: python
+    
+            plt.figure(figsize=(12, 6))
+    
+            plt.subplot(2, 1, 1)
+            plot_spectrogram(matrix=spectrogram.T, time_points=time_points_spectrogram,
+                              frequencies=frequencies_spectrogram,
+                              title="Regular Spectrogram")
+    
+            plt.subplot(2, 1, 2)
+            plot_spectrogram(matrix=audiogram, time_points=time_points_audiogram,
+                              frequencies=frequencies_audiogram,
+                              title="Audiogram")
+    
+            plt.tight_layout()
+            plt.show()
 
-        plt.figure(figsize=(12, 6))
-
-        plt.subplot(2, 1, 1)
-        plot_spectrogram(matrix=spectrogram, time_points=time_points_spectrogram,
-                          frequencies=frequencies_spectrogram,
-                          title="Regular Spectrogram")
-
-        plt.subplot(2, 1, 2)
-        plot_spectrogram(matrix=audiogram, time_points=time_points_audiogram,
-                          frequencies=frequencies_audiogram,
-                          title="Audiogram")
-
-        plt.tight_layout()
-        plt.show()
-
-    :param matrix: 2-D array of magnitude values to plot, of shape (len(time_points), len(frequencies)),
-        matching the (time points, frequencies) orientation of `wav2aud`'s audiogram output.
-        Values are converted to decibels internally; values less than or equal to zero are clipped to
-        a small positive constant beforehand to avoid taking the log of zero.
+    :param matrix: 2-D array of magnitude values to plot, of shape ``[timepoints, frequencies]``.
+         Values are converted to decibels internally by ``to_decibel``.
     :type matrix: numpy.ndarray
 
     :param time_points: 1-D array of time values (in seconds) corresponding to the rows of ``matrix``.
@@ -55,19 +97,25 @@ def plot_spectrogram(matrix: np.ndarray,
     :param title: Title displayed above the plot.
     :type title: str, optional, default='Spectrogram'
 
-    :returns: None. The spectrogram is drawn on the current matplotlib axes.
+    :param vmin: Decibel floor passed to ``to_decibel``, clipping the low end of the colour scale.
+    :type vmin: float, optional, default=None
+
+    :param normalize: If ``True``, plot decibels relative to the peak of ``matrix`` rather than
+        to an absolute magnitude of 1.0. Passed to ``to_decibel``.
+    :type normalize: bool, optional, default=False
+
+    :returns: None.
     :rtype: None
     """
 
-    ylim=[frequencies[0], frequencies[-1]]
-
-    def to_decibel(x: np.ndarray) -> np.ndarray:
-        return 20 * np.log10(np.maximum(x, 1e-9))
+    # Due to log scale, frequency axis cannot show 0 Hz, fall back to lowest positive frequency in that case.
+    positive_frequencies = frequencies[frequencies > 0]
+    ylim = [positive_frequencies[0], positive_frequencies[-1]] if positive_frequencies.size \
+        else [frequencies[0], frequencies[-1]]
 
     plt.title(title)
 
-    # pcolormesh so the linearly-spaced FFT bins can be mapped onto a log-scaled frequency axis
-    plt.pcolormesh(time_points, frequencies, to_decibel(matrix).T) # NOTE - added transpose here
+    plt.pcolormesh(time_points, frequencies, to_decibel(matrix, vmin=vmin, normalize=normalize).T)
     plt.colorbar(label='Magnitude (dB)')
 
     plt.xlabel("Time (s)")
@@ -84,25 +132,21 @@ def cr_projections(cr: np.ndarray, rates: np.ndarray,
     The magnitude ``|cr|`` is reduced over the time axis and then collapsed onto each
     remaining pair of axes. This is the shared computation behind
     :func:`plot_cr_projection`; it is exposed separately so a cortical representation can
-    be reduced to its (small) projections without also plotting.
+    be reduced to its projections without plotting.
 
     ``cr``'s rate axis has length ``2*len(rates)``: the first half is the ``sgn = -1``
-    sweep-direction branch and the second half the ``sgn = +1`` branch (see
+    sweep-direction and the second half the ``sgn = +1`` direction (see
     :func:`~neural_audio.aud2cor.aud2cor`). ``signed_rates`` controls how the two halves
     are combined:
 
-    - ``False`` (default): the two directions are **averaged** together, so the rate axis
+    - ``False`` (default): the two directions are averaged together, so the rate axis
       of the returned projections has length ``len(rates)`` and direction is discarded.
-      This is the historical behaviour.
-    - ``True``: the two directions are **kept side by side** on a single signed rate axis
+    - ``True``: the two directions are kept side by side on a single signed rate axis
       of length ``2*len(rates)``. The first half is reversed onto negative rates and the
       second half onto positive rates, matching
       ``np.concatenate([-rates[::-1], rates])``. ``scale_rate`` and ``rate_freq`` then
       carry the full ``2*len(rates)`` rate axis; ``scale_freq`` is identical in both modes.
 
-    The time axis is reduced scale-by-scale so the largest temporary is a single scale
-    slice rather than a full-resolution ``|cr|`` copy, which matters when ``aud2cor`` is
-    run with margins.
 
     :param cr: 4-D cortical output, shape (num_scales, num_rates*2, num_time, num_freq).
     :type cr: numpy.ndarray
@@ -117,9 +161,7 @@ def cr_projections(cr: np.ndarray, rates: np.ndarray,
     """
     n_rate = len(rates)
 
-    # Magnitude, time-averaged scale-by-scale -> [scale, 2*n_rate, freq]. Reducing the
-    # (large) time axis first bounds the peak temporary to one scale slice; a whole-array
-    # np.abs(cr) would be gigabytes at full resolution with margins.
+    # Magnitude, time-averaged scale-by-scale to reduce memory usage
     mag = np.empty(cr.shape[:2] + cr.shape[3:])
     for s in range(cr.shape[0]):
         mag[s] = np.abs(cr[s]).mean(axis=1)
@@ -494,10 +536,7 @@ def plot_spectfilt_response(H: np.ndarray, channels_per_oct: int, max_scale: flo
  
     :returns: The axes the filter response was drawn on.
     :rtype: matplotlib.axes.Axes
- 
-    .. note:: ``gen_corf`` returns a purely real magnitude array (no phase
-        term, unlike ``gen_cort``)
-    """
+     """
     H = np.asarray(H)
     L = len(H)
  

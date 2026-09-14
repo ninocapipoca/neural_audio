@@ -123,8 +123,7 @@ def gen_ripple(rate: float,
                duration: float = 2.0,
                sf: int = 16000,
                f_min: float = 180,
-               f_max: float = 7040,
-               seed: int = 0) -> np.ndarray:
+               f_max: float = 7040) -> np.ndarray:
     r"""
     Generates a sinusoidal ripple stimulus following the description in Chi et al. (2005) [1]_, caption of Fig. 1(b):
 
@@ -134,13 +133,13 @@ def gen_ripple(rate: float,
     w (rate) is the ripple velocity in Hz, and Omega (scale) is the ripple density
     in cycles/octave.
 
-    A ripple stimulus (the signal) is made up of many pure sinusoids, log-spaced in frequency between `f_min` and `f_max`,
+    The signal is made up of many pure sinusoids, log-spaced in frequency between `f_min` and `f_max`,
     which are each amplitude-modulated by S(t, x) evaluated at their own octave position x, then summed.
     Here, S(t,x) is referred to as the ripple function, which is not the same as the signal
     itself; it only describes how the signal changes across time and frequency.
 
     :param rate: Ripple velocity (w), in Hz. Controls how quickly the stimulus modulations happen in time.
-        Sign controls sweep direction (up/down).
+        Sign controls sweep direction ("up"/"down").
     :type rate: float
 
     :param scale: Ripple density (Omega), in cycles/octave. Controls how frequency modulations in the stimulus occur.
@@ -158,10 +157,6 @@ def gen_ripple(rate: float,
     :param f_max: Highest carrier (sinusoid) frequency, in Hz.
     :type f_max: float, optional, default=7040
 
-    :param seed: Seed for the random carrier phases. A fixed value keeps the output
-        reproducible; pass a different value for an independent realisation.
-    :type seed: int, optional, default=0
-
     :returns: 1D signal of shape (duration*sf,).
     :rtype: numpy.ndarray
 
@@ -178,7 +173,7 @@ def gen_ripple(rate: float,
     rel_pos = np.log2(freqs / f_min)  # position in octaves, 0 at f_min
 
     # random per-carrier phases so carriers do not all cohere at t=0
-    rng = np.random.default_rng(seed)
+    rng = np.random.default_rng(seed=0)
     carrier_phases = rng.uniform(0, 2 * np.pi, size=num_channels)
 
     tau = 2 * np.pi * t
@@ -200,7 +195,8 @@ def gen_temporal_modulations_rate(rate: float, duration: float = 2, sf: int = 16
 
     A pure-tone carrier is amplitude-modulated by a sinusoidal envelope at
     ``rate`` Hz. This produces smooth temporal modulation without the step-function-like behavior of short bursts 
-    as in ``gen_temporal_modulations``.
+    as in ``gen_temporal_modulations``. To avoid artefacts, smoothing can be applied setting ``ramp = True`` and tuned
+    using ``ramp_frac``.
 
     :param rate: Temporal modulation rate in Hz.
     :type rate: float
