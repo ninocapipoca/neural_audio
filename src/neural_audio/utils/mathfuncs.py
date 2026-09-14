@@ -107,7 +107,7 @@ def gen_spectral_modulations(num_sinusoids: int=6,
 
     .. warning:: If you plan on using this signal with ``wav2aud`` make sure that the maximum and minimum frequencies are
         within the calibrated range. For the default ``wav2aud`` parameters (octave shift 0, sampling rate 16kHz) the range is 180-7040Hz. 
-        For non-default paramters, you may need to adjust ``f_min`` and ``f_max`` accordingly. See ``wav2aud`` documentation or 
+        For non-default parameters, you may need to adjust ``f_min`` and ``f_max`` accordingly. See ``wav2aud`` documentation or 
         the corresponding tutorial for more information on these adjustments.
     """
     t = np.arange(0, duration, 1/sf) 
@@ -336,7 +336,7 @@ def gen_spectral_modulations_scale(scale: float, f_min: int = 180, f_max: int = 
 
     .. warning:: If you plan on using this signal with ``wav2aud`` make sure that the maximum and minimum frequencies are
         within the calibrated range. For the default ``wav2aud`` parameters (octave shift 0, sampling rate 16kHz) the range is 180-7040Hz.
-        For non-default paramters, you may need to adjust ``f_min`` and ``f_max`` accordingly.
+        For non-default parameters, you may need to adjust ``f_min`` and ``f_max`` accordingly.
     """
     n_octaves = np.log2(f_max / f_min)
     num_sinusoids = max(2, round(scale * n_octaves) + 1)

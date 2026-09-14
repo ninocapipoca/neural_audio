@@ -21,3 +21,6 @@ tutorials/scratchpad.ipynb
 # Commit the split folders written by neural_audio.utils.mat_split instead.
 unit_tests/matlab_outputs/aud2cor/*.mat
 unit_tests/matlab_outputs/aud2cor/**/*.mat
+
+# Superseded by aud2cor_split_tests.py
+unit_tests/aud2cor_tests.py
