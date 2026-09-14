@@ -5,7 +5,7 @@ This toolbox is an implementation of an auditory model of the cochlea as develop
 ## Installation
 This package is available on [PyPI](https://pypi.org/project/neural-audio/) and can be installed using `pip install neural-audio`
 
-The plotting helpers additionally require matplotlib, and the MATLAB reference splitting utilities require h5py. To install those too, use `pip install "neural-audio[plotting,hdf5]"`
+The plotting helpers additionally require matplotlib, and the MATLAB reference splitting/reconstruction utilities necessary to run the unit tests for aud2cor require h5py. To install those too, use `pip install "neural-audio[plotting,hdf5]"`
 
 ## Key functions
 - `wav2aud` permits the user to produce a spectrogram ('audiogram') in which each row is a time frame and each column represents the average spike count carried by one auditory nerve fiber
@@ -20,4 +20,4 @@ The plotting helpers additionally require matplotlib, and the MATLAB reference s
 Tutorials provide narrative explanations of how functions and their parameters work, alongside sample code and corresponding output. The objective is to help the user get a quick practical grasp of how to use the toolbox. They can be found in the **tutorials** folder. For more details, documentation is also available via [ReadTheDocs](https://neural-audio.readthedocs.io/en/latest/).
 
 ### Note on AI usage
-While Claude Code was used to assist this project, much of the code is still hand-written, or was verified carefully by a human. The tutorials and technical explanations were human-written and verified for accuracy as much as possible.
+Claude Code was used to assist this project. As a result, it a mixture of manually-written and LLM-written content. Most text descriptions, including the tutorials and docstrings, were manually written due to their technical nature. Claude Code was used to write 'first draft' code which was then manually cleaned up and optimized where possible. Any LLM output, across any domain of the project, is carefully verified for accuracy, to the best of our ability. 

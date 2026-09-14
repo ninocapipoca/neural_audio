@@ -67,22 +67,23 @@ def plot_spectrogram(matrix: np.ndarray,
         has the opposite arrangement, so its transpose will need to be passed instead.
 
     Example usage:
+
     .. code-block:: python
-    
-            plt.figure(figsize=(12, 6))
-    
-            plt.subplot(2, 1, 1)
-            plot_spectrogram(matrix=spectrogram.T, time_points=time_points_spectrogram,
-                              frequencies=frequencies_spectrogram,
-                              title="Regular Spectrogram")
-    
-            plt.subplot(2, 1, 2)
-            plot_spectrogram(matrix=audiogram, time_points=time_points_audiogram,
-                              frequencies=frequencies_audiogram,
-                              title="Audiogram")
-    
-            plt.tight_layout()
-            plt.show()
+
+        plt.figure(figsize=(12, 6))
+
+        plt.subplot(2, 1, 1)
+        plot_spectrogram(matrix=spectrogram.T, time_points=time_points_spectrogram,
+                         frequencies=frequencies_spectrogram,
+                         title="Regular Spectrogram")
+
+        plt.subplot(2, 1, 2)
+        plot_spectrogram(matrix=audiogram, time_points=time_points_audiogram,
+                         frequencies=frequencies_audiogram,
+                         title="Audiogram")
+
+        plt.tight_layout()
+        plt.show()
 
     :param matrix: 2-D array of magnitude values to plot, of shape ``[timepoints, frequencies]``.
          Values are converted to decibels internally by ``to_decibel``.

@@ -1,26 +1,18 @@
-neural\_audio.utils package
-===========================
+utils
+=====
 
-neural\_audio.utils.mathfuncs module
-------------------------------------
+mathfuncs
+---------
 
 .. automodule:: neural_audio.utils.mathfuncs
    :members:
    :undoc-members:
    :show-inheritance:
 
-neural\_audio.utils.visualize\_outputs module
----------------------------------------------
+visualize_outputs
+-----------------
 
 .. automodule:: neural_audio.utils.visualize_outputs
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-neural\_audio.utils.mat\_split module
--------------------------------------
-
-.. automodule:: neural_audio.utils.mat_split
    :members:
    :undoc-members:
    :show-inheritance:
