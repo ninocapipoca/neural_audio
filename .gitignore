@@ -18,7 +18,7 @@ src/neural_audio/utils/scratchpad.ipynb
 tutorials/scratchpad.ipynb
 
 # Original MATLAB cortical references are too large for GitHub (hundreds of MB each).
-# Commit the split folders written by neural_audio.utils.mat_split instead.
+# Commit the split folders written by unit_tests/mat_split.py instead.
 unit_tests/matlab_outputs/aud2cor/*.mat
 unit_tests/matlab_outputs/aud2cor/**/*.mat
 
