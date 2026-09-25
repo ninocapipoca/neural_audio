@@ -1,5 +1,5 @@
-neural\_audio package
-=====================
+neural_audio
+============
 
 Subpackages
 -----------
@@ -12,26 +12,18 @@ Subpackages
 Submodules
 ----------
 
-neural\_audio.wav2aud module
-----------------------------
+wav2aud
+-------
 
 .. automodule:: neural_audio.wav2aud
    :members:
    :undoc-members:
    :show-inheritance:
 
-neural\_audio.aud2cor module
-----------------------------
+aud2cor
+-------
 
 .. automodule:: neural_audio.aud2cor
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-neural\_audio.examples.sounds.load module
------------------------------------------
-
-.. automodule:: neural_audio.examples.sounds.load
    :members:
    :undoc-members:
    :show-inheritance:

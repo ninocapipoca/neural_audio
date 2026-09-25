@@ -7,7 +7,8 @@ def aud2cor(audiogram: np.ndarray,
             bandpass: int=1,
             rates: np.ndarray | None = None,
             scales: np.ndarray | None = None,
-            channels_per_oct: int | None = None) -> np.ndarray:
+            channels_per_oct: int | None = None,
+            filters: dict | None = None) -> np.ndarray:
     """
     Cortical rate-scale representation (forward transform).
 
@@ -27,7 +28,7 @@ def aud2cor(audiogram: np.ndarray,
     :type spectral_margin: float, optional, default=0
 
     :param bandpass: Controls passband for filter generating functions ``gen_corf`` and ``gen_cort``. If set to 1, only bandpass filters will
-        be generated. Must be an integer boolean, i.e. the literal int ``0`` or ``1``. Python's ``True``/``False`` are not
+        be generated. Must be an integer boolean, i.e. the literal int ``0`` or ``1``.``True``/``False`` are not
         accepted, since ``bandpass`` is used directly in arithmetic when building the ``PASS`` argument passed to
         ``gen_corf`` and ``gen_cort``.
     :type bandpass: int, optional, default=1
@@ -50,6 +51,17 @@ def aud2cor(audiogram: np.ndarray,
         channels per octave), you should supply the corresponding ``channels_per_oct`` value here explicitly, since it
         will not necessarily match the default.
     :type channels_per_oct: int, optional, default=None
+
+    :param filters: A precomputed cortical filter bank, as returned by ``build_cortical_filters`` with
+        ``meta=True``. The cortical filters depend only on the parameters above (and on the padded
+        audiogram dimensions), not on the audiogram values, so when running ``aud2cor`` many times with
+        the same parameters and audiogram shape you can build the bank once and pass it in here to skip
+        rebuilding it on every call. If ``None`` (the default), the bank is built internally for this
+        call. When supplied, it is validated against the parameters of this call and a ``ValueError`` is
+        raised on mismatch (e.g. a bank built for a different audiogram length, ``bandpass`` value or
+        rate/scale vector); it must have been built with ``meta=True`` so this check can run. A
+        passed-in bank is only read, never modified, so the same object is safe to reuse across calls.
+    :type filters: dict, optional, default=None
 
     .. note:: The output of ``wav2aud`` already has shape ``[N, M]`` = (time-frames, frequency channels) and is passed to ``aud2cor`` directly, with no transpose. This mirrors the MATLAB NSL toolbox, where ``aud2cor`` takes the ``wav2aud`` output as-is.
 
@@ -87,6 +99,10 @@ def aud2cor(audiogram: np.ndarray,
     if channels_per_oct is not None:
         assert isinstance(channels_per_oct, int) and channels_per_oct > 0, "The channels_per_oct parameter should be a positive integer, if supplied."
 
+    # Ensure filters, if supplied, is a dict
+    if filters is not None:
+        assert isinstance(filters, dict), "The filters parameter should be a dict, if supplied."
+
     # Check margins are within allowed range
     if not (0 <= temporal_margin <= 1):
         raise ValueError(f"temporal_margin must be in [0, 1], got {temporal_margin}")
@@ -105,7 +121,6 @@ def aud2cor(audiogram: np.ndarray,
     num_scales = len(scales) # number of scale channels K2
     N, M = audiogram.shape # dimensions of audiogram; shape (timepoints, num channels)
 
-    fps = 1000.0 / frame_length # frames per second (fps)
     if channels_per_oct is None:
         channels_per_oct = 20 if M == 95 else 24 # channels per octave (channels_per_oct)
 
@@ -116,15 +131,30 @@ def aud2cor(audiogram: np.ndarray,
     #M2 = M_pad * 2
 
     # --- 2D FFT of auditory spectrogram ---
-    # First along frequency axis, then along time axis
-    Y = np.zeros((N_pad*2, M_pad), dtype=complex)
-    for n in range(N):
-        R1 = np.fft.fft(audiogram[n, :], 2*M_pad)
-        Y[n, :] = R1[:M_pad]
-    for m in range(M_pad): # !! fft on output of previous (Y)
-        # NOTE Allows you to capture interaction
-        R1 = np.fft.fft(Y[:N, m], 2*N_pad)
-        Y[:, m] = R1
+    # First along frequency axis (keeping the positive frequencies), then along time axis.
+    # the second FFT on the output of the first allows you to capture interaction.
+    Y = np.fft.fft(audiogram, 2*M_pad, axis=1)[:, :M_pad]   # (N, M_pad)
+    Y = np.fft.fft(Y, 2*N_pad, axis=0) # (2*N_pad, M_pad), zero-padded in time
+
+    # --- Filter bank ---
+    if filters is None:
+        filters = build_cortical_filters(N, M, frame_length, bandpass,
+                                         rates, scales, channels_per_oct, meta=True)
+    else:
+        # Validate a caller-supplied bank against this call's parameters
+        reference = build_cortical_filters(N, M, frame_length, bandpass,
+                                           rates, scales, channels_per_oct, meta=True)
+        if "meta" not in filters:
+            raise ValueError("The supplied filter bank has no 'meta' block, required for validation; build it with "
+                             "build_cortical_filters(..., meta=True)")
+        if filters["meta"] != reference["meta"]:
+            raise ValueError(
+                "The supplied filters bank does not match the parameters of this aud2cor call "
+                f"(bank meta {filters['meta']} vs expected {reference['meta']}).")
+
+    HR_pos = filters["HR_pos"]
+    HR_neg = filters["HR_neg"]
+    HS_bank = filters["HS"]
 
     # --- Index setup ---
     dM   = int(np.floor(M / 2 * spectral_margin))
@@ -146,34 +176,21 @@ def aud2cor(audiogram: np.ndarray,
     # Main loop: rate × direction × scale                                #
     # ------------------------------------------------------------------ #
     for rdx in range(num_rates):
-        tune_rate = rates[rdx] # PASS shape [idx, num_rates]
-        HR = gen_cort(tune_rate, N_pad, fps, [rdx + 1 + bandpass, num_rates + bandpass * 2])
-
         for sgn in [1, -1]:
-
-            if sgn > 0:
-                HR = np.concatenate([HR, np.zeros(N_pad, dtype=complex)])
-
-            else:
-                HR = np.concatenate([HR[:1], np.conj(HR[1:2*N_pad][::-1])])
-                HR[N_pad] = abs(HR[N_pad+1])
+            # Precomputed temporal filter for this rate and sweep direction.
+            HR = HR_pos[rdx] if sgn > 0 else HR_neg[rdx]
 
             # --- First IFFT (along time axis) pulled out of scale loop ---
-            z1_freq = np.zeros((2*N_pad, M_pad), dtype=complex)
-            for m in range(M_pad):
-                z1_freq[:, m] = HR * Y[:, m] # equivalent to convolution (with frequency-domain wavelet) using convolution theorem
-            z1 = np.fft.ifft(z1_freq, axis=0)   # (2*N_pad, M_pad)
+            # HR[:, None] * Y broadcasts the wavelet across all frequency columns; equivalent to
+            # convolution (with the frequency-domain wavelet) via the convolution theorem.
+            z1 = np.fft.ifft(HR[:, None] * Y, axis=0)   # (2*N_pad, M_pad)
             z1 = z1[ndx1, :] # (N+2*dN, M_pad)
 
             for sdx in range(num_scales):
-                tune_scale = scales[sdx]
-                HS = gen_corf(tune_scale, M_pad, channels_per_oct, PASS=[sdx + 1 + bandpass, num_scales + bandpass * 2])
+                HS = HS_bank[sdx]
 
                 # --- Second IFFT (along frequency axis) ---
-                z = np.zeros((N + 2 * dN, M + 2 * dM), dtype=complex)
-                for n in range(N + 2 * dN):
-                    R1 = np.fft.ifft(z1[n, :] * HS.conj(), (2*M_pad))
-                    z[n, :] = R1[mdx1]
+                z = np.fft.ifft(z1 * HS.conj()[None, :], 2*M_pad, axis=1)[:, mdx1]
 
                 # Store in output array
                 col = rdx + (num_rates if sgn == 1 else 0)
@@ -182,6 +199,106 @@ def aud2cor(audiogram: np.ndarray,
 
 
     return corticogram
+
+
+def build_cortical_filters(N: int, M: int, frame_length: int, bandpass: int,
+                           rates: np.ndarray, scales: np.ndarray, channels_per_oct: int,
+                           meta: bool = False) -> dict:
+    """
+    Build the cortical filter bank used by :func:`aud2cor`.
+
+    The temporal filters (from :func:`gen_cort`) and spectral filters (from :func:`gen_corf`) depend
+    only on the parameters and the padded audiogram dimensions, not on the audiogram values.
+    When ``aud2cor`` is run many times with the same parameters and audiogram shape, the bank can be
+    built once with this function and passed back in via the ``filters`` argument of ``aud2cor``,
+    avoiding the cost of regenerating the filters on every call.
+
+    This function performs no default handling of its own.
+
+    :param N: Number of audiogram time-frames. Sets the padded
+        time length ``N_pad = 2 ** ceil(log2(N))`` used for the temporal filters.
+    :type N: int
+    :param M: Number of audiogram frequency channels. Sets the
+        padded frequency length ``M_pad = 2 ** ceil(log2(M))`` used for the spectral filters.
+    :type M: int
+
+    :param frame_length: The length (in milliseconds) of a single time-frame of the audiogram, i.e. the same
+            ``frame_length`` that was passed to ``wav2aud``. It sets the frame rate (``1000 / frame_length``, in Hz)
+            against which the temporal filters produced by ``gen_cort`` are defined, so a mismatch with the value used
+            for ``wav2aud`` will misplace the rate axis.
+    :type frame_length: int
+    
+    :param temporal_margin: Fullness of the temporal margin; any real value in [0,1].
+    :type temporal_margin: float
+    
+    :param spectral_margin: Fullness of the spectral margin; any real value in [0,1].
+    :type spectral_margin: float
+    
+    :param bandpass: Controls passband for filter generating functions ``gen_corf`` and ``gen_cort``. If set to 1, only bandpass filters will
+            be generated. Must be an integer boolean, i.e. the literal int ``0`` or ``1``.``True``/``False`` are not
+            accepted, since ``bandpass`` is used directly in arithmetic when building the ``PASS`` argument passed to
+            ``gen_corf`` and ``gen_cort``.
+    :type bandpass: int
+    
+    :param rates: Rate vector, in Hz, used to define temporal filter behavior. Each value is a characteristic temporal 
+            modulation frequency that one (temporal) filter in the bank is tuned to. Temporal filters are generated by ``gen_cort``.
+    :type rates: numpy.ndarray
+    
+    :param scales: Scale vector, in cycles/octave, used to define spectral filter behavior. Each value is a spectral 
+            modulation frequency that one (spectral) filter in the bank is tuned to. Spectral filters are generated by ``gen_corf``.
+    :type scales: numpy.ndarray
+    
+    :param channels_per_oct: Frequency resolution of the auditory spectrogram, in channels per octave. This determines
+            how ``gen_corf`` interprets the spectral (frequency) axis of the audiogram when generating filters.
+    :type channels_per_oct: int
+
+    :param meta: If ``True``, include a ``"meta"`` block in the returned dict recording the parameters
+        the bank was built for. ``aud2cor`` uses this block to validate a bank supplied via its
+        ``filters`` argument, so build with ``meta=True`` whenever the bank will be passed back to
+        ``aud2cor``.
+    :type meta: bool, optional, default=False
+
+    :returns: A dict with keys
+        - ``HR_pos`` : temporal filters for the positive sweep direction, shape ``(num_rates, 2*N_pad)``.
+        - ``HR_neg`` : temporal filters for the negative sweep direction, shape ``(num_rates, 2*N_pad)``.
+        - ``HS`` : spectral filters, shape ``(num_scales, M_pad)``.
+        - ``meta`` : (only when ``meta=True``) a dict of the parameters the bank was built for.
+    :rtype: dict
+    """
+    rates = np.asarray(rates).ravel()
+    scales = np.asarray(scales).ravel()
+    num_rates = len(rates)
+    num_scales = len(scales)
+
+    fps = 1000.0 / frame_length
+    N_pad = int(2 ** np.ceil(np.log2(N)))
+    M_pad = int(2 ** np.ceil(np.log2(M)))
+
+    # Temporal filters, one per rate and sweep direction. The negative-sweep filter is derived from
+    # the (zero-extended) positive-sweep filter, reproducing exactly the in-place construction the
+    # original loop performed.
+    HR_pos = np.zeros((num_rates, 2 * N_pad), dtype=complex)
+    HR_neg = np.zeros((num_rates, 2 * N_pad), dtype=complex)
+    for rdx in range(num_rates):
+        HR0 = gen_cort(rates[rdx], N_pad, fps, [rdx + 1 + bandpass, num_rates + bandpass * 2])
+        pos = np.concatenate([HR0, np.zeros(N_pad, dtype=complex)])
+        neg = np.concatenate([pos[:1], np.conj(pos[1:2 * N_pad][::-1])])
+        neg[N_pad] = abs(neg[N_pad + 1])
+        HR_pos[rdx] = pos
+        HR_neg[rdx] = neg
+
+    # Spectral filters, one per scale (computed once here rather than once per rate/direction).
+    HS = np.zeros((num_scales, M_pad), dtype=complex)
+    for sdx in range(num_scales):
+        HS[sdx] = gen_corf(scales[sdx], M_pad, channels_per_oct,
+                           PASS=[sdx + 1 + bandpass, num_scales + bandpass * 2])
+
+    bank = {"HR_pos": HR_pos, "HR_neg": HR_neg, "HS": HS}
+    if meta:
+        bank["meta"] = {"N_pad": N_pad, "M_pad": M_pad, "num_rates": num_rates,
+                        "num_scales": num_scales, "bandpass": bandpass,
+                        "channels_per_oct": channels_per_oct}
+    return bank
 
 
 # ------------------------------------------------------------------ #
