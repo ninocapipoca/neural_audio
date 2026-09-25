@@ -207,8 +207,8 @@ def build_cortical_filters(N: int, M: int, frame_length: int, bandpass: int,
     """
     Build the cortical filter bank used by :func:`aud2cor`.
 
-    The temporal filters (from :func:`gen_cort`) and spectral filters (from :func:`gen_corf`) depend
-    only on the parameters and the padded audiogram dimensions, not on the audiogram values.
+    The temporal and spectral filters depend
+    only on the parameters and the padded audiogram dimensions, not on the values themselves.
     When ``aud2cor`` is run many times with the same parameters and audiogram shape, the bank can be
     built once with this function and passed back in via the ``filters`` argument of ``aud2cor``,
     avoiding the cost of regenerating the filters on every call.
@@ -235,9 +235,7 @@ def build_cortical_filters(N: int, M: int, frame_length: int, bandpass: int,
     :type spectral_margin: float
     
     :param bandpass: Controls passband for filter generating functions ``gen_corf`` and ``gen_cort``. If set to 1, only bandpass filters will
-            be generated. Must be an integer boolean, i.e. the literal int ``0`` or ``1``.``True``/``False`` are not
-            accepted, since ``bandpass`` is used directly in arithmetic when building the ``PASS`` argument passed to
-            ``gen_corf`` and ``gen_cort``.
+            be generated. Must be an integer boolean, i.e. the literal int ``0`` or ``1``.
     :type bandpass: int
     
     :param rates: Rate vector, in Hz, used to define temporal filter behavior. Each value is a characteristic temporal 
