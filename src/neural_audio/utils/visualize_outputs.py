@@ -301,7 +301,8 @@ def plot_cr_projection(cr: np.ndarray, rates: np.ndarray, scales: np.ndarray | N
 def plot_cr_temporal(cr: np.ndarray, rates: np.ndarray, scales: np.ndarray | None = None,
                      time_points: np.ndarray | None = None,
                      figsize: tuple[float, float] = (10, 4),
-                     axes: Sequence[Axes] | None = None) -> tuple[Figure, tuple[Axes, Axes]]:
+                     axes: Sequence[Axes] | None = None,
+                     signed_rates: bool = False) -> tuple[Figure, tuple[Axes, Axes]]:
     """Plots time-resolved projections (rate-time, scale-time) of a cortical representation produced by `aud2cor`.
 
     Rather than collapsing the time axis as in :func:`plot_cr_projection`, this function instead keeps time on the x-axis
@@ -315,25 +316,11 @@ def plot_cr_temporal(cr: np.ndarray, rates: np.ndarray, scales: np.ndarray | Non
     The magnitude ``|cr|`` is used, since it acts as a strength-of-match measure for a pair
     (scale, rate), essentially quantifying how much the signal is acting like (scale, rate).
 
-    By default, ``cr`` is expected to contain both sweep directions (``cr.shape[1] == 2*len(rates)``),
-    and the two directions are averaged together, matching
-    :func:`plot_cr_projection` for comparability. To inspect a single direction instead, an appropriate
-    slice of the cortical representation can be passed in, e.g:
+    ``cr`` contains both sweep directions (``cr.shape[1] == 2*len(rates)``). By default the two
+    directions are averaged together, as in :func:`plot_cr_projection`. Pass ``signed_rates=True``
+    to keep them apart on a signed rate axis instead (see below).
 
-    .. code-block:: python
-
-            directionA = cr[:, :len(rates)]
-            directionB = cr[:, len(rates):]
-            plot_cr_temporal(directionA, rates, scales, time_points)
-
-    Here 'upwards' or 'downwards' are not explicitly assigned as it depends on the sign convention of
-    the rate. The naming is arbitrary; the importance lies in the filters being able to capture both
-    modulation directions.
-
-
-    :param cr: 4-D cortical output. Either both directions, shape
-        ``(num_scales, num_rates*2, num_time, num_freq)`` (averaged together), or a single
-        direction, shape ``(num_scales, num_rates, num_time, num_freq)`` (used as-is).
+    :param cr: 4-D cortical output, shape (num_scales, num_rates*2, num_time, num_freq).
         ``num_time`` may include the margins added by ``aud2cor``'s
         ``temporal_margin``; margin columns are shown but left unlabeled.
     :type cr: numpy.ndarray
@@ -354,27 +341,34 @@ def plot_cr_temporal(cr: np.ndarray, rates: np.ndarray, scales: np.ndarray | Non
         larger subplot grid, so several representations can be compared in a single figure.
         If None, a new 1x2 figure is created.
     :type axes: list of matplotlib.axes.Axes, optional
+    :param signed_rates: If ``True``, keep the two sweep directions on a single signed rate
+        axis (running ``-rates[::-1] .. +rates``) instead of the default behavior of averaging
+        them together. The Rate-Time panel then spans both directions, with a dashed line
+        marking the boundary between the negative and positive halves and the energy landing
+        on the side matching the stimulus' sweep direction. The Scale-Time panel is the same in
+        both modes. Both modes share a single colour scale per panel, so the weaker direction
+        is not brightened to match the stronger one.
+    :type signed_rates: bool, optional, default=False
 
     :returns: The figure and its two axes ``(fig, (ax_rate, ax_scale))``.
     :rtype: tuple
     """
     if cr.ndim != 4:
         raise ValueError("cr must be a 4-D array with shape (scale, rate, time, frequency).")
+    if cr.shape[1] != 2 * len(rates):
+        raise ValueError(
+            f"cr.shape[1] ({cr.shape[1]}) must equal 2*len(rates) ({2*len(rates)})."
+        )
 
     n_rate = len(rates)
 
-    if cr.shape[1] == 2 * n_rate:
-        # both sweep directions present: magnitude of the analytic output,
-        # averaged over the two sweep directions
-        mag = (np.abs(cr[:, :n_rate, :, :]) + np.abs(cr[:, n_rate:2*n_rate, :, :])) / 2  # [scale, rate, time, freq]
-    elif cr.shape[1] == n_rate:
-        # single direction already selected by the caller: use as-is, no averaging
-        mag = np.abs(cr)  # [scale, rate, time, freq]
+    if signed_rates:
+        # first half reversed onto negative rates, second half onto positive
+        order = np.concatenate([np.arange(n_rate)[::-1], np.arange(n_rate) + n_rate])
+        mag = np.abs(cr[:, order])  # [scale, 2*rate, time, freq]
     else:
-        raise ValueError(
-            f"cr.shape[1] ({cr.shape[1]}) must equal either len(rates) ({n_rate}), "
-            f"for a single sweep direction, or 2*len(rates) ({2*n_rate}), for both directions."
-        )
+        # magnitude of the analytic output, averaged over the two sweep directions
+        mag = (np.abs(cr[:, :n_rate, :, :]) + np.abs(cr[:, n_rate:2*n_rate, :, :])) / 2  # [scale, rate, time, freq]
 
     rate_time = mag.mean(axis=(0, 3))          # [rate, time]
     scale_time = mag.mean(axis=(1, 3))         # [scale, time]
@@ -422,9 +416,18 @@ def plot_cr_temporal(cr: np.ndarray, rates: np.ndarray, scales: np.ndarray | Non
             ax.set_xticklabels(t_labels, rotation=45)
 
     # Rate ticks (y-axis on ax_rate; rates are not padded)
-    r_idx = np.linspace(0, n_rate - 1, 6).astype(int)
+    if signed_rates:
+        # signed axis of length 2*len(rates): -rates[::-1] .. +rates
+        signed = np.concatenate([-rates[::-1], rates])
+        r_idx = np.linspace(0, len(signed) - 1, 6).astype(int)
+        r_labels = [f"{signed[i]:+.1f}" for i in r_idx]
+        # dashed divider between the negative and positive halves
+        ax_rate.axhline(n_rate - 0.5, color="grey", ls="--", lw=1)
+    else:
+        r_idx = np.linspace(0, n_rate - 1, 6).astype(int)
+        r_labels = [f"{rates[i]:.1f}" for i in r_idx]
     ax_rate.set_yticks(r_idx)
-    ax_rate.set_yticklabels([f"{rates[i]:.1f}" for i in r_idx])
+    ax_rate.set_yticklabels(r_labels)
 
     # Scale ticks (y-axis on ax_scale; scales are not padded)
     if scales is not None:
