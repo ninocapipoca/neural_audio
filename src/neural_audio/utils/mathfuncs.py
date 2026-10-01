@@ -42,41 +42,7 @@ def sigmoid(y: np.ndarray, fac:int) -> np.ndarray:
         return y
 
 
-def gen_temporal_modulations(num_bursts: int | None = None, duration: int = 2,
-                             sf: int = 16000) -> np.ndarray:
-    """
-    Generates a signal with only temporal modulations where every frequency is present in short bursts.
-
-    .. warning:: This signal is highly artificial and prone to artefacts. Thus, it is not recommended to use
-        with the toolbox, except to test its limitations.
-
-    :param num_bursts: The number of bursts in the signal. If none specified, is set to ``np.ceil(duration/5)``
-    :type num_bursts: int, optional, default=None
-
-    :param duration: Duration of the signal, in seconds
-    :type duration: int, optional, default=2
-
-    :param sf: Sampling frequency in Hz, used in the calculation of the number of time points (``duration * sf``) 
-        and hence defines the signal's temporal resolution
-    :type sf: int, optional, default=16000
-
-    :returns: 1D signal of shape (duration*sf,); for example, if your sampling frequency is 16kHz and you have a duration of
-        2 seconds, your output signal will have length 32kHz.
-    :rtype: numpy.ndarray
-    """
-    t = np.arange(0, duration, 1/sf) 
-
-    if num_bursts is None:
-        num_bursts = int(np.ceil(duration/5))
-
-    # create short evenly spaced bursts
-    v_stripes = np.zeros_like(t)
-    burst_idxs = np.linspace(0, len(t) - 1, num_bursts, dtype=int)
-    v_stripes[burst_idxs] = 1.0
-
-    return v_stripes
-
-def gen_spectral_modulations(num_sinusoids: int=6, 
+def _gen_spectral_modulations(num_sinusoids: int=6, 
                              f_min: int=180,
                              f_max: int=7040,
                              duration: int=2, 
@@ -195,7 +161,7 @@ def gen_temporal_modulations_rate(rate: float, duration: float = 2, sf: int = 16
 
     A pure-tone carrier is amplitude-modulated by a sinusoidal envelope at
     ``rate`` Hz. This produces smooth temporal modulation without the step-function-like behavior of short bursts 
-    as in ``gen_temporal_modulations``. To avoid artefacts, smoothing can be applied setting ``ramp = True`` and tuned
+    as in ``gen_temporal_bursts_rate``. To avoid artefacts, smoothing can be applied setting ``ramp = True`` and tuned
     using ``ramp_frac``.
 
     :param rate: Temporal modulation rate in Hz.
@@ -306,12 +272,12 @@ def gen_spectral_modulations_scale(scale: float, f_min: int = 180, f_max: int = 
     """
     Generates a signal with only spectral modulations at a given spectral modulation scale.
 
-    This is a thin wrapper around :func:`gen_spectral_modulations`: the ``scale`` (in
-    cycles/octave) sets how many log-spaced sinusoidal carriers are placed per octave across
+    This is a wrapper around :func:`_gen_spectral_modulations` that allows spectral modulations to be 
+     generated based on ``scale`` (in cycles/octave) rather than manually specifying each of the carrier parameters.
+    The scale sets how many sinusoids are placed per octave, log spaced, across
     the ``[f_min, f_max]`` range, namely ``num_sinusoids = round(scale * n_octaves) + 1``.
     A larger ``scale`` therefore packs the carriers more densely, giving more closely spaced
-    spectral stripes (faster variation across frequency). As with ``gen_spectral_modulations``,
-    the signal is constant in time.
+    spectral stripes (faster variation across frequency).
 
     :param scale: Spectral modulation scale in cycles/octave. Sets the carrier density
         (carriers per octave).
@@ -341,5 +307,5 @@ def gen_spectral_modulations_scale(scale: float, f_min: int = 180, f_max: int = 
     n_octaves = np.log2(f_max / f_min)
     num_sinusoids = max(2, round(scale * n_octaves) + 1)
 
-    return gen_spectral_modulations(num_sinusoids=num_sinusoids, f_min=f_min,
+    return _gen_spectral_modulations(num_sinusoids=num_sinusoids, f_min=f_min,
                                     f_max=f_max, duration=duration, sf=sf)

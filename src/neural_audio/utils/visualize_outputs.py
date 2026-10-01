@@ -126,7 +126,7 @@ def plot_spectrogram(matrix: np.ndarray,
     plt.gca().yaxis.set_major_formatter(ticker.ScalarFormatter())
 
 
-def cr_projections(cr: np.ndarray, rates: np.ndarray,
+def _cr_projections(cr: np.ndarray, rates: np.ndarray,
                    signed_rates: bool = False) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Compute the three 2-D projections of a cortical representation.
 
@@ -226,7 +226,7 @@ def plot_cr_projection(cr: np.ndarray, rates: np.ndarray, scales: np.ndarray | N
             f"cr.shape[1] ({cr.shape[1]}) must equal 2*len(rates) ({2*len(rates)})."
         )
 
-    scale_rate, scale_freq, rate_freq = cr_projections(cr, rates, signed_rates=signed_rates)
+    scale_rate, scale_freq, rate_freq = _cr_projections(cr, rates, signed_rates=signed_rates)
 
     # Frequency margin offset: real frequency i sits at data-column i + dM
     n_freq_actual = scale_freq.shape[1]
