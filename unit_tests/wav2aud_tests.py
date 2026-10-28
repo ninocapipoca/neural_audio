@@ -8,6 +8,7 @@ from neural_audio.wav2aud import wav2aud
 test_dir = Path(__file__).parent # unit_tests folder
 
 sf = 16000 # sampling freq
+L_frm = 64 # samples per 4 ms frame at 16 kHz
 
 def construct_cases_audio():
     
@@ -42,49 +43,40 @@ sin_cases = construct_cases_sinusoids()
 
 class audioTests(unittest.TestCase):
     @parameterized.expand(audio_cases, name_func=name_audio)
-    def test_audiofiles(self, sound, csv):
+    def test_audiofiles(self, sound, csv, abs_tol=1e-6, apply_overwrite=True):
         soundData, sample_rate = soundf.read(sound)
+
+        # MATLAB's wav2aud "zero-pads" with x(N*L_frm) = 0, which overwrites the last
+        # sample when the length is already a multiple of the frame length
+        if apply_overwrite and len(soundData) % L_frm == 0:
+            soundData[-1] = 0
 
         matlab_out = np.genfromtxt(csv, delimiter=',')
         _, _, py_out = wav2aud(soundData)
 
-        np.testing.assert_allclose(py_out, matlab_out, atol=1e-2)
+        np.testing.assert_allclose(py_out, matlab_out, atol=abs_tol * np.abs(matlab_out).max())
 
 class sinusoidTests(unittest.TestCase):
     @parameterized.expand(sin_cases, name_func=name_sinusoids)
-    def test_sinusoid(self, wave, freq):
+    def test_sinusoid(self, wave, freq, abs_tol=1e-6, apply_overwrite=True):
         file = str(freq) + 'hz.csv'
         csv = test_dir / 'matlab_outputs' / file
+
+        # see test_audiofiles
+        if apply_overwrite and len(wave) % L_frm == 0:
+            wave[-1] = 0
 
         matlab_out = np.genfromtxt(csv, delimiter=',')
         _, _, py_out = wav2aud(wave)
 
-        diff = np.abs(py_out - matlab_out)
-        np.testing.assert_allclose(0 * diff, diff, atol=1e-2)
+        np.testing.assert_allclose(py_out, matlab_out, atol=abs_tol * np.abs(matlab_out).max())
 
 class stepTest(unittest.TestCase):
-    def test_stepfunc(self):
+    def test_stepfunc(self, abs_tol=1e-6):
         step_input = np.ones(500)
         csv = test_dir / 'matlab_outputs' / 'step.csv'
 
         matlab_out = np.genfromtxt(csv, delimiter=',')
         _, _, py_out = wav2aud(step_input)
 
-        diff = np.abs(py_out - matlab_out)
-        np.testing.assert_allclose(0 * diff, diff, atol=1e-2)
-
-class channelCoverageTest(unittest.TestCase):
-    def test_all_channels_populated(self):
-        # catches an off-by-one in the channel loop leaving a channel at its
-        # np.zeros value. the matlab comparisons use atol=1e-2, which is too
-        # loose to catch this for the quietest channels
-        duration = 1
-        t = np.arange(0, duration, 1/sf)
-        wave = np.sin(2 * np.pi * 440 * t)
-
-        _, _, py_out = wav2aud(wave)
-
-        # py_out is (time-frames, channels), so check down the columns
-        empty = [ch for ch in range(py_out.shape[1]) if np.all(py_out[:, ch] == 0)]
-
-        self.assertEqual(empty, [], f"channels never written: {empty}")
+        np.testing.assert_allclose(py_out, matlab_out, atol=abs_tol * np.abs(matlab_out).max())

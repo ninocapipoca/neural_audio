@@ -26,6 +26,7 @@ test_dir = Path(__file__).parent # unit tests folder
 matlab_outputs = test_dir / 'matlab_outputs' / 'aud2cor'
 
 sf = 16000 # sampling frequency
+L_frm = 64 # samples per 4 ms wav2aud frame at 16 kHz
 
 # HALF-RESOLUTION rates and scales
 half_rates = 2 ** np.linspace(np.log2(0.5), np.log2(128), 16)   # temporal modulation rates [Hz]
@@ -75,14 +76,16 @@ class audioSplitTests(unittest.TestCase):
         log(f"{sound.stem}: reference {matlab_out.shape} {matlab_out.dtype.name} "
             f"in {time.perf_counter() - started:.1f} s")
 
+        # MATLAB's wav2aud "zero-pads" with x(N*L_frm) = 0, which overwrites the last
+        # sample when the length is already a multiple of the frame length
+        if apply_overwrite and len(soundData) % L_frm == 0:
+            soundData[-1] = 0
+
         # get python result
         _, _, spect = wav2aud(soundData)
         py_out = aud2cor(spect, rates=half_rates, scales=half_scales)
 
         matlab_out = np.transpose(matlab_out, axes=range(matlab_out.ndim)[::-1])
-        scaled_tol = abs_tol * np.abs((matlab_out).max())
-
-        if apply_overwrite:
-            pass # change things here
+        scaled_tol = abs_tol * np.abs(matlab_out).max()
 
         np.testing.assert_allclose(py_out, matlab_out, atol=scaled_tol)
