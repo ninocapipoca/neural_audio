@@ -65,7 +65,7 @@ if not audio_cases:
 
 class audioSplitTests(unittest.TestCase):
     @parameterized.expand(audio_cases, name_func=name_audio)
-    def test_audiofiles(self, sound, mat):
+    def test_audiofiles(self, sound, mat, abs_tol=1e-6, apply_overwrite=True):
         soundData, sample_rate = soundf.read(sound)
 
         # get matlab result, reassembled from the split parts
@@ -80,5 +80,9 @@ class audioSplitTests(unittest.TestCase):
         py_out = aud2cor(spect, rates=half_rates, scales=half_scales)
 
         matlab_out = np.transpose(matlab_out, axes=range(matlab_out.ndim)[::-1])
+        scaled_tol = abs_tol * np.abs((matlab_out).max())
 
-        np.testing.assert_allclose(py_out, matlab_out, atol=1e-2)
+        if apply_overwrite:
+            pass # change things here
+
+        np.testing.assert_allclose(py_out, matlab_out, atol=scaled_tol)
