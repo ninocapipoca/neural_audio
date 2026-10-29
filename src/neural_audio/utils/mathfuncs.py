@@ -237,14 +237,17 @@ def gen_temporal_modulations_rate(rate: float, duration: float = 2, sf: int = 16
 
     return signal, envelope
 
-def gen_temporal_bursts_rate(rate: float, duration: float = 2, sf: int = 16000) -> np.ndarray:
+def gen_temporal_bursts_rate(rate: float, duration: float = 2, sf: int = 16000,
+                             burst_length: int = 1) -> np.ndarray:
     """
     Generates a signal containing bursts at a specified
     modulation rate.
 
-    The signal consists of evenly spaced impulses, one every ``1/rate`` seconds starting
-    at t = 0. Every acoustic frequency is therefore present, while the temporal
-    modulation is controlled solely by the burst spacing.
+    The signal consists of evenly spaced broadband bursts, one every ``1/rate`` seconds starting
+    at t = 0. Every acoustic frequency is present, while the temporal
+    modulation is controlled by the burst spacing. By default each burst is a single-sample
+    impulse; with ``burst_length > 1`` each burst is instead a segment of white noise of that many
+    samples (the same noise segment for every burst).
 
     :param rate: Temporal modulation rate in Hz (bursts per second).
     :type rate: float
@@ -255,11 +258,18 @@ def gen_temporal_bursts_rate(rate: float, duration: float = 2, sf: int = 16000) 
     :param sf: Sampling frequency in Hz.
     :type sf: int, optional
 
+    :param burst_length: Length of each burst, in samples. Must be at least 1 and no longer than
+        the spacing between bursts (``sf / rate`` samples). Default is 1 (a single-sample impulse).
+    :type burst_length: int, optional
+
     :returns: 1-D signal of length ``duration * sf``.
     :rtype: numpy.ndarray
     """
     if rate <= 0:
         raise ValueError("rate parameter must be positive")
+
+    if not 1 <= burst_length <= sf / rate:
+        raise ValueError("burst_length must be between 1 and the burst spacing (sf / rate samples)")
 
     t = np.arange(0, duration, 1 / sf)
 
@@ -267,8 +277,18 @@ def gen_temporal_bursts_rate(rate: float, duration: float = 2, sf: int = 16000) 
     burst_idxs = np.round(np.arange(0, duration, 1 / rate) * sf).astype(int)
     burst_idxs = burst_idxs[burst_idxs < len(t)]
 
+    if burst_length == 1:
+        burst = np.ones(1)
+    else:
+        # Every burst and every call uses the same noise segment
+        rng = np.random.default_rng(seed=0)
+        burst = rng.standard_normal(burst_length)
+        burst /= np.abs(burst).max()
+
     signal = np.zeros_like(t)
-    signal[burst_idxs] = 1.0
+    for idx in burst_idxs:
+        seg = burst[:len(t) - idx]
+        signal[idx:idx + len(seg)] = seg
 
     return signal
 
