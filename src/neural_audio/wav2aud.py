@@ -23,7 +23,7 @@ def wav2aud(x: np.ndarray,
         * convolving the signal with a corresponding cell-specific bandpass filter that is implemented as a second-order section infinite impulse response (IIR) function. The frames of the sliding-frame procedure are contiguous and non-overlapping.
         * applying a non-linear activation function to the output of each filter, modeling the hair cell transduction. The nonlinearity can be a sigmoid, step function, rectified linear function, or identity function, depending on the value of ``sigmoid_factor``.
         * applying a low-pass filter to the output of each nonlinearity, modeling the hair cell membrane potential. This step is skipped when ``sigmoid_factor`` is set to -2, which models a linear ionic channel mode without membrane potential dynamics.
-        * computing lateral inhibition between adjacent hair-cells by subtracting the output of each filter from the one above it, followed by half-wave rectification. Note, to compute lateral inhibition for the channel of highest frequency, an auxiliary hair-cell with higher frequency selectivity is used. This auxiliary hair-cell will not be represented with a separate channel in the output diagram.
+        * computing lateral inhibition between adjacent hair-cells by subtracting the output of each filter from the one above it, followed by half-wave rectification. Note, to compute lateral inhibition for the channel of highest frequency, an auxiliary hair-cell with higher frequency selectivity is used. This auxiliary hair-cell will not be represented with a separate channel in the output audiogram.
         * applying temporal integration (i.e. smoothing) to the output of the lateral inhibitory network, either by leaky integration (when ``time_constant`` is set to a positive value) or by single time-frame averaging (when ``time_constant`` is set to 0).
     
     :param x: The input waveform as a 1-D time-series of audio samples with a maximum sampling frequency of 16kHz. The use of lower 
@@ -36,7 +36,7 @@ def wav2aud(x: np.ndarray,
         ``sampling_rate = 16000 * 2 ** octave_shift``. For example, set ``octave_shift`` to ``-1`` for an 8 kHz sampling rate.
     :type octave_shift: int, optional, default=0
     :param frame_length: The length (in milliseconds) of a single frame used when convolving ``x`` with the filters. This is equal to the time span 
-        of a single output time-frame. Common values: 8, 16, or others powers of two. 
+        of a single output time-frame. Common values: 8, 16, or other powers of two. 
     :type frame_length: int, optional, default=4
     :param sigmoid_factor: Controls the non-linear activation function applied to the raw filter outputs.
         Possible values:
@@ -93,8 +93,6 @@ def wav2aud(x: np.ndarray,
         waveform = np.sin(2 * np.pi * note * t)  # 1 second of audio 
         time_points, frequencies, audiogram  = wav2aud(waveform)
 
-
-    .. note:: This python implementation has been tested on pure sinusoids, object sounds, animal sounds and human speech to produce outputs that are equal to the original NSL toolbox Matlab implementation by Yang, Wang and Shamma (1992 and 1994) up to a numerical precision of 0.01 using the default filters. 
 
     .. warning:: This function has only been tested using the filters of Yang, Wang and Shamma. Providing sounds outside the supported frequency range or using custom filters may lead to unexpected results.
         

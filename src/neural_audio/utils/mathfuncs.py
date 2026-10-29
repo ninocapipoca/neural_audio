@@ -1,7 +1,7 @@
 import numpy as np
 import warnings
 
-def sigmoid(y: np.ndarray, fac:int) -> np.ndarray:
+def sigmoid(y: np.ndarray, fac: float) -> np.ndarray:
     """
     Nonlinear sigmoid function for cochlear hair cell modelling.
 
@@ -42,11 +42,11 @@ def sigmoid(y: np.ndarray, fac:int) -> np.ndarray:
         return y
 
 
-def _gen_spectral_modulations(num_sinusoids: int=6, 
-                             f_min: int=180,
-                             f_max: int=7040,
-                             duration: int=2, 
-                             sf: int=16000) -> np.ndarray:
+def _gen_spectral_modulations(num_sinusoids: int=6,
+                              f_min: int=180,
+                              f_max: int=7040,
+                              duration: int=2,
+                              sf: int=16000) -> np.ndarray:
     """
     Generates a signal with only spectral modulations; different frequencies are present but they are constant in time.
 
@@ -129,7 +129,7 @@ def gen_ripple(rate: float,
     .. rubric:: References
 
     .. [1] Chi, Taishih & Ru, Powen & Shamma, Shihab (2005),
-        "Multiresolution spectrotemporal analysis of complex sounds" ,
+        "Multiresolution spectrotemporal analysis of complex sounds",
         The Journal of the Acoustical Society of America, 118, 887-906,
         10.1121/1.1945807
     """
@@ -153,8 +153,8 @@ def gen_ripple(rate: float,
     return signal
 
 def gen_temporal_modulations_rate(rate: float, duration: float = 2, sf: int = 16000,
-                                  carrier_freq: float = 1000, depth: float = 1.0, ramp: bool = False, 
-                                  ramp_frac: float = 0.05, clip: bool = True) -> np.ndarray:
+                                  carrier_freq: float = 1000, depth: float = 1.0, ramp: bool = False,
+                                  ramp_frac: float = 0.05, clip: bool = True) -> tuple[np.ndarray, np.ndarray]:
     """
     Generates a signal containing only temporal modulations at a specified
     modulation rate.
@@ -195,8 +195,9 @@ def gen_temporal_modulations_rate(rate: float, duration: float = 2, sf: int = 16
         default, but can be toggled to allow compatibility with other filterbanks.
     :type clip: bool, optional
 
-    :returns: 1-D signal of length ``int(duration * sf)``.
-    :rtype: numpy.ndarray
+    :returns: Tuple ``(signal, envelope)`` of 1-D arrays of length ``int(duration * sf)``: the modulated
+        signal and the amplitude envelope applied to the carrier.
+    :rtype: tuple of numpy.ndarray
     """
 
     if not 0 <= ramp_frac <= 0.5:
@@ -209,11 +210,11 @@ def gen_temporal_modulations_rate(rate: float, duration: float = 2, sf: int = 16
         warnings.warn(f"carrier_freq={carrier_freq} Hz is outside or close to the edges of the default filterbank range (approx 180-7040 Hz)")
         if clip:
             carrier_freq = np.clip(carrier_freq, 180, 7040)
-            warnings.warn(f"carrier_freq= clipped to {carrier_freq}")
+            warnings.warn(f"carrier_freq clipped to {carrier_freq} Hz")
 
-    if carrier_freq < 8 * rate: 
+    if carrier_freq < 8 * rate:
         # a rough baseline to avoid artefacts
-        warnings.warn(f"carrier_freq={carrier_freq} Hz is not much greater than rate={rate} Hz; envelope may not be well-defined (beating). Try {carrier_freq*8}Hz")
+        warnings.warn(f"carrier_freq={carrier_freq} Hz is not much greater than rate={rate} Hz; envelope may not be well-defined (beating). Try at least {rate*8} Hz")
 
     t = np.arange(0, duration, 1 / sf)
 
@@ -241,8 +242,8 @@ def gen_temporal_bursts_rate(rate: float, duration: float = 2, sf: int = 16000) 
     Generates a signal containing bursts at a specified
     modulation rate.
 
-    The signal consists of evenly spaced impulses, with ``rate`` bursts per
-    second. Every acoustic frequency is therefore present, while the temporal
+    The signal consists of evenly spaced impulses, one every ``1/rate`` seconds starting
+    at t = 0. Every acoustic frequency is therefore present, while the temporal
     modulation is controlled solely by the burst spacing.
 
     :param rate: Temporal modulation rate in Hz (bursts per second).
@@ -257,12 +258,16 @@ def gen_temporal_bursts_rate(rate: float, duration: float = 2, sf: int = 16000) 
     :returns: 1-D signal of length ``duration * sf``.
     :rtype: numpy.ndarray
     """
+    if rate <= 0:
+        raise ValueError("rate parameter must be positive")
+
     t = np.arange(0, duration, 1 / sf)
 
-    num_bursts = max(1, int(np.round(rate * duration)))
+    # one burst every 1/rate seconds, rounded to the nearest sample
+    burst_idxs = np.round(np.arange(0, duration, 1 / rate) * sf).astype(int)
+    burst_idxs = burst_idxs[burst_idxs < len(t)]
 
     signal = np.zeros_like(t)
-    burst_idxs = np.linspace(0, len(t) - 1, num_bursts, dtype=int)
     signal[burst_idxs] = 1.0
 
     return signal
@@ -272,10 +277,10 @@ def gen_spectral_modulations_scale(scale: float, f_min: int = 180, f_max: int = 
     """
     Generates a signal with only spectral modulations at a given spectral modulation scale.
 
-    This is a wrapper around :func:`_gen_spectral_modulations` that allows spectral modulations to be 
-     generated based on ``scale`` (in cycles/octave) rather than manually specifying each of the carrier parameters.
+    This is a wrapper around ``_gen_spectral_modulations`` that allows spectral modulations to be
+    generated based on ``scale`` (in cycles/octave) rather than manually specifying each of the carrier parameters.
     The scale sets how many sinusoids are placed per octave, log spaced, across
-    the ``[f_min, f_max]`` range, namely ``num_sinusoids = round(scale * n_octaves) + 1``.
+    the ``[f_min, f_max]`` range, namely ``num_sinusoids = max(2, round(scale * n_octaves) + 1)``.
     A larger ``scale`` therefore packs the carriers more densely, giving more closely spaced
     spectral stripes (faster variation across frequency).
 
@@ -308,4 +313,4 @@ def gen_spectral_modulations_scale(scale: float, f_min: int = 180, f_max: int = 
     num_sinusoids = max(2, round(scale * n_octaves) + 1)
 
     return _gen_spectral_modulations(num_sinusoids=num_sinusoids, f_min=f_min,
-                                    f_max=f_max, duration=duration, sf=sf)
+                                     f_max=f_max, duration=duration, sf=sf)

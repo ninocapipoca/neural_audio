@@ -28,7 +28,7 @@ def aud2cor(audiogram: np.ndarray,
     :type spectral_margin: float, optional, default=0
 
     :param bandpass: Controls passband for filter generating functions ``gen_corf`` and ``gen_cort``. If set to 1, only bandpass filters will
-        be generated. Must be an integer boolean, i.e. the literal int ``0`` or ``1``.``True``/``False`` are not
+        be generated. Must be an integer boolean, i.e. the literal int ``0`` or ``1``. ``True``/``False`` are not
         accepted, since ``bandpass`` is used directly in arithmetic when building the ``PASS`` argument passed to
         ``gen_corf`` and ``gen_cort``.
     :type bandpass: int, optional, default=1
@@ -235,7 +235,7 @@ def build_cortical_filters(N: int, M: int, frame_length: int, bandpass: int,
     :type spectral_margin: float
     
     :param bandpass: Controls passband for filter generating functions ``gen_corf`` and ``gen_cort``. If set to 1, only bandpass filters will
-            be generated. Must be an integer boolean, i.e. the literal int ``0`` or ``1``.``True``/``False`` are not
+            be generated. Must be an integer boolean, i.e. the literal int ``0`` or ``1``. ``True``/``False`` are not
             accepted, since ``bandpass`` is used directly in arithmetic when building the ``PASS`` argument passed to
             ``gen_corf`` and ``gen_cort``.
     :type bandpass: int
@@ -393,17 +393,16 @@ def gen_corf(tune_scale: int, filt_len: int, channels_per_oct: int,
     (units) and hence the higher the frequency resolution. This scale is divided by the
     number of cycles per octave, producing units of 'channels per 0.5 cycles'.
 
-    Two functions can be used to define the filter response, either a Gabor function or the
-    negative second derivative of a Gaussian, selected via ``func_type``. Importantly, it is
-    their frequency-domain forms that are used.
+    The filter response is defined by the negative second derivative of a Gaussian (see the
+    note below). Importantly, it is its frequency-domain form that is used.
 
     For a lowpass filter, everything up to the maximum is flattened to 1 (ideal pass). Likewise, 
     for highpass filtering, everything from the maximum until the end is flattened to 1. In both
     cases, the sum of the transfer function is readjusted to preserve the filter's gain across all
     passbands. If bandpass behavior is specified, the transfer function remains unchanged. 
 
-    :param tune_scale: (Spectral) modulation rate in cycles per octave
-    :type tune_scale: int
+    :param tune_scale: Spectral modulation scale in cycles per octave
+    :type tune_scale: float
 
     :param filt_len: Filter length, ideally a power of 2
     :type filt_len: int

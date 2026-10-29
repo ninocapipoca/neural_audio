@@ -1,5 +1,3 @@
-# TODO - make 
-
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import numpy as np
@@ -129,12 +127,12 @@ def plot_spectrogram(matrix: np.ndarray,
 
 
 def _cr_projections(cr: np.ndarray, rates: np.ndarray,
-                   signed_rates: bool = False) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+                    signed_rates: bool = False) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Compute the three 2-D projections of a cortical representation.
 
     The magnitude ``|cr|`` is reduced over the time axis and then collapsed onto each
     remaining pair of axes. This is the shared computation behind
-    :func:`plot_cr_projection`; it is exposed separately so a cortical representation can
+    :func:`plot_cr_projection`; it is kept separate so a cortical representation can
     be reduced to its projections without plotting.
 
     ``cr``'s rate axis has length ``2*len(rates)``: the first half is the ``sgn = -1``
@@ -523,11 +521,11 @@ def plot_spectfilt_response(H: np.ndarray, channels_per_oct: int, max_scale: flo
     filter, as produced by one call to ``gen_corf``.
  
     :param H: The filter's magnitude response, i.e. the array returned by
-        ``gen_corf(fc, L, channels_per_oct, func_type)``. Its length is used directly
+        ``gen_corf(tune_scale, filt_len, channels_per_oct, PASS)``. Its length is used directly
         to build the frequency axis, so pass in ``H`` exactly as returned.
     :type H: numpy.ndarray
     :param channels_per_oct: Channels per octave used when ``H`` was generated
-        (the same ``channels_per_oct`` / ``SRF`` argument passed to ``gen_corf``).
+        (the same ``channels_per_oct`` argument passed to ``gen_corf``).
         Needed here to convert array index into cycles/octave.
     :type channels_per_oct: int
     :param max_scale: If given, the x-axis is cut off at this scale
@@ -547,8 +545,8 @@ def plot_spectfilt_response(H: np.ndarray, channels_per_oct: int, max_scale: flo
     L = len(H)
  
     # Real frequency axis in cyc/oct: index m of H corresponds to
-    # m/L * channels_per_oct/2 (same derivation as R1 inside gen_corf, just
-    # without dividing out fc).
+    # m/L * channels_per_oct/2 (same derivation as octave_offsets inside gen_corf,
+    # just without dividing by tune_scale).
     freqs = np.arange(L) / L * channels_per_oct / 2
  
     if ax is None:
