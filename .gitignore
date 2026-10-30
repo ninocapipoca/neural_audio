@@ -24,3 +24,5 @@ unit_tests/matlab_outputs/aud2cor/**/*.mat
 
 # Superseded by aud2cor_split_tests.py
 unit_tests/aud2cor_tests.py
+
+debugging/

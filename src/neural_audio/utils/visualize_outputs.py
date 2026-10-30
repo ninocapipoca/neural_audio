@@ -126,13 +126,13 @@ def plot_spectrogram(matrix: np.ndarray,
     plt.gca().yaxis.set_major_formatter(ticker.ScalarFormatter())
 
 
-def cr_projections(cr: np.ndarray, rates: np.ndarray,
-                   signed_rates: bool = False) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+def _cr_projections(cr: np.ndarray, rates: np.ndarray,
+                    signed_rates: bool = False) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Compute the three 2-D projections of a cortical representation.
 
     The magnitude ``|cr|`` is reduced over the time axis and then collapsed onto each
     remaining pair of axes. This is the shared computation behind
-    :func:`plot_cr_projection`; it is exposed separately so a cortical representation can
+    :func:`plot_cr_projection`; it is kept separate so a cortical representation can
     be reduced to its projections without plotting.
 
     ``cr``'s rate axis has length ``2*len(rates)``: the first half is the ``sgn = -1``
@@ -183,7 +183,7 @@ def plot_cr_projection(cr: np.ndarray, rates: np.ndarray, scales: np.ndarray | N
                        axes: Sequence[Axes] | None = None,
                        signed_rates: bool = False) -> tuple[Figure, tuple[Axes, Axes, Axes]]:
     """
-    Plots 2D projections (scale-rate, scale-frequency, rate-frequency) of a cortical representation produced by `aud2cor`, with time averaged out.
+    Plots 2D projections (scale-rate, scale-frequency, rate-frequency) of a cortical representation produced by ``aud2cor``, with time averaged out.
 
     :param cr: 4-D cortical output, shape (num_scales, num_rates*2, num_time, num_freq).
         num_time and num_freq may include zero/wrap-around margins added by aud2cor's
@@ -226,7 +226,7 @@ def plot_cr_projection(cr: np.ndarray, rates: np.ndarray, scales: np.ndarray | N
             f"cr.shape[1] ({cr.shape[1]}) must equal 2*len(rates) ({2*len(rates)})."
         )
 
-    scale_rate, scale_freq, rate_freq = cr_projections(cr, rates, signed_rates=signed_rates)
+    scale_rate, scale_freq, rate_freq = _cr_projections(cr, rates, signed_rates=signed_rates)
 
     # Frequency margin offset: real frequency i sits at data-column i + dM
     n_freq_actual = scale_freq.shape[1]
@@ -302,8 +302,9 @@ def plot_cr_projection(cr: np.ndarray, rates: np.ndarray, scales: np.ndarray | N
 def plot_cr_temporal(cr: np.ndarray, rates: np.ndarray, scales: np.ndarray | None = None,
                      time_points: np.ndarray | None = None,
                      figsize: tuple[float, float] = (10, 4),
-                     axes: Sequence[Axes] | None = None) -> tuple[Figure, tuple[Axes, Axes]]:
-    """Plots time-resolved projections (rate-time, scale-time) of a cortical representation produced by `aud2cor`.
+                     axes: Sequence[Axes] | None = None,
+                     signed_rates: bool = False) -> tuple[Figure, tuple[Axes, Axes]]:
+    """Plots time-resolved projections (rate-time, scale-time) of a cortical representation produced by ``aud2cor``.
 
     Rather than collapsing the time axis as in :func:`plot_cr_projection`, this function instead keeps time on the x-axis
     and collapses the two axes that are not being examined, producing two time-resolved views:
@@ -316,25 +317,11 @@ def plot_cr_temporal(cr: np.ndarray, rates: np.ndarray, scales: np.ndarray | Non
     The magnitude ``|cr|`` is used, since it acts as a strength-of-match measure for a pair
     (scale, rate), essentially quantifying how much the signal is acting like (scale, rate).
 
-    By default, ``cr`` is expected to contain both sweep directions (``cr.shape[1] == 2*len(rates)``),
-    and the two directions are averaged together, matching
-    :func:`plot_cr_projection` for comparability. To inspect a single direction instead, an appropriate
-    slice of the cortical representation can be passed in, e.g:
+    ``cr`` contains both sweep directions (``cr.shape[1] == 2*len(rates)``). By default the two
+    directions are averaged together, as in :func:`plot_cr_projection`. Pass ``signed_rates=True``
+    to keep them apart on a signed rate axis instead (see below).
 
-    .. code-block:: python
-
-            directionA = cr[:, :len(rates)]
-            directionB = cr[:, len(rates):]
-            plot_cr_temporal(directionA, rates, scales, time_points)
-
-    Here 'upwards' or 'downwards' are not explicitly assigned as it depends on the sign convention of
-    the rate. The naming is arbitrary; the importance lies in the filters being able to capture both
-    modulation directions.
-
-
-    :param cr: 4-D cortical output. Either both directions, shape
-        ``(num_scales, num_rates*2, num_time, num_freq)`` (averaged together), or a single
-        direction, shape ``(num_scales, num_rates, num_time, num_freq)`` (used as-is).
+    :param cr: 4-D cortical output, shape (num_scales, num_rates*2, num_time, num_freq).
         ``num_time`` may include the margins added by ``aud2cor``'s
         ``temporal_margin``; margin columns are shown but left unlabeled.
     :type cr: numpy.ndarray
@@ -345,8 +332,9 @@ def plot_cr_temporal(cr: np.ndarray, rates: np.ndarray, scales: np.ndarray | Non
     :type scales: numpy.ndarray, optional
     :param time_points: Time values (in seconds) for the *unpadded* time frames, e.g. the
         ``time_points`` returned by ``wav2aud``. Used for real x-tick labels; when shorter
-        than ``cr``'s time axis (because ``temporal_margin > 0`` was used) the labels are offset
-        into the real-data region. If ``None``, the axis shows the frame index.
+        than ``cr``'s time axis (because ``temporal_margin > 0`` was used) only the real frames
+        at the start are labeled, and the margin frames that ``aud2cor`` appends after them are
+        left unlabeled. If ``None``, the axis shows the frame index.
     :type time_points: numpy.ndarray, optional
     :param figsize: Figure size, used only when a new figure is created (``axes=None``).
     :type figsize: tuple of float, optional, default=(10, 4)
@@ -355,27 +343,34 @@ def plot_cr_temporal(cr: np.ndarray, rates: np.ndarray, scales: np.ndarray | Non
         larger subplot grid, so several representations can be compared in a single figure.
         If None, a new 1x2 figure is created.
     :type axes: list of matplotlib.axes.Axes, optional
+    :param signed_rates: If ``True``, keep the two sweep directions on a single signed rate
+        axis (running ``-rates[::-1] .. +rates``) instead of the default behavior of averaging
+        them together. The Rate-Time panel then spans both directions, with a dashed line
+        marking the boundary between the negative and positive halves and the energy landing
+        on the side matching the stimulus' sweep direction. The Scale-Time panel is the same in
+        both modes. Both modes share a single colour scale per panel, so the weaker direction
+        is not brightened to match the stronger one.
+    :type signed_rates: bool, optional, default=False
 
     :returns: The figure and its two axes ``(fig, (ax_rate, ax_scale))``.
     :rtype: tuple
     """
     if cr.ndim != 4:
         raise ValueError("cr must be a 4-D array with shape (scale, rate, time, frequency).")
+    if cr.shape[1] != 2 * len(rates):
+        raise ValueError(
+            f"cr.shape[1] ({cr.shape[1]}) must equal 2*len(rates) ({2*len(rates)})."
+        )
 
     n_rate = len(rates)
 
-    if cr.shape[1] == 2 * n_rate:
-        # both sweep directions present: magnitude of the analytic output,
-        # averaged over the two sweep directions
-        mag = (np.abs(cr[:, :n_rate, :, :]) + np.abs(cr[:, n_rate:2*n_rate, :, :])) / 2  # [scale, rate, time, freq]
-    elif cr.shape[1] == n_rate:
-        # single direction already selected by the caller: use as-is, no averaging
-        mag = np.abs(cr)  # [scale, rate, time, freq]
+    if signed_rates:
+        # first half reversed onto negative rates, second half onto positive
+        order = np.concatenate([np.arange(n_rate)[::-1], np.arange(n_rate) + n_rate])
+        mag = np.abs(cr[:, order])  # [scale, 2*rate, time, freq]
     else:
-        raise ValueError(
-            f"cr.shape[1] ({cr.shape[1]}) must equal either len(rates) ({n_rate}), "
-            f"for a single sweep direction, or 2*len(rates) ({2*n_rate}), for both directions."
-        )
+        # magnitude of the analytic output, averaged over the two sweep directions
+        mag = (np.abs(cr[:, :n_rate, :, :]) + np.abs(cr[:, n_rate:2*n_rate, :, :])) / 2  # [scale, rate, time, freq]
 
     rate_time = mag.mean(axis=(0, 3))          # [rate, time]
     scale_time = mag.mean(axis=(1, 3))         # [scale, time]
@@ -407,25 +402,34 @@ def plot_cr_temporal(cr: np.ndarray, rates: np.ndarray, scales: np.ndarray | Non
 
     ax_rate, ax_scale = axes
 
-    # Time ticks (x-axis on all panels), offset into the real-data region if margins exist
+    # Time ticks (x-axis on all panels). aud2cor appends any temporal margin after the
+    # real data, so the real frames start at index 0 and need no offset.
     if time_points is not None:
-        dN = (n_time_actual - len(time_points)) // 2
-        if dN < 0:
+        if len(time_points) > n_time_actual:
             raise ValueError(
                 f"len(time_points) ({len(time_points)}) exceeds cr's time dimension "
                 f"({n_time_actual}); time_points must correspond to the unpadded time axis."
             )
         t_idx = np.linspace(0, len(time_points) - 1, 6).astype(int)
-        t_ticks = t_idx + dN
+        t_ticks = t_idx
         t_labels = [f"{time_points[i]:.2f}" for i in t_idx]
         for ax in axes:
             ax.set_xticks(t_ticks)
             ax.set_xticklabels(t_labels, rotation=45)
 
     # Rate ticks (y-axis on ax_rate; rates are not padded)
-    r_idx = np.linspace(0, n_rate - 1, 6).astype(int)
+    if signed_rates:
+        # signed axis of length 2*len(rates): -rates[::-1] .. +rates
+        signed = np.concatenate([-rates[::-1], rates])
+        r_idx = np.linspace(0, len(signed) - 1, 6).astype(int)
+        r_labels = [f"{signed[i]:+.1f}" for i in r_idx]
+        # dashed divider between the negative and positive halves
+        ax_rate.axhline(n_rate - 0.5, color="grey", ls="--", lw=1)
+    else:
+        r_idx = np.linspace(0, n_rate - 1, 6).astype(int)
+        r_labels = [f"{rates[i]:.1f}" for i in r_idx]
     ax_rate.set_yticks(r_idx)
-    ax_rate.set_yticklabels([f"{rates[i]:.1f}" for i in r_idx])
+    ax_rate.set_yticklabels(r_labels)
 
     # Scale ticks (y-axis on ax_scale; scales are not padded)
     if scales is not None:
@@ -518,11 +522,11 @@ def plot_spectfilt_response(H: np.ndarray, channels_per_oct: int, max_scale: flo
     filter, as produced by one call to ``gen_corf``.
  
     :param H: The filter's magnitude response, i.e. the array returned by
-        ``gen_corf(fc, L, channels_per_oct, func_type)``. Its length is used directly
+        ``gen_corf(tune_scale, filt_len, channels_per_oct, PASS)``. Its length is used directly
         to build the frequency axis, so pass in ``H`` exactly as returned.
     :type H: numpy.ndarray
     :param channels_per_oct: Channels per octave used when ``H`` was generated
-        (the same ``channels_per_oct`` / ``SRF`` argument passed to ``gen_corf``).
+        (the same ``channels_per_oct`` argument passed to ``gen_corf``).
         Needed here to convert array index into cycles/octave.
     :type channels_per_oct: int
     :param max_scale: If given, the x-axis is cut off at this scale
@@ -542,8 +546,8 @@ def plot_spectfilt_response(H: np.ndarray, channels_per_oct: int, max_scale: flo
     L = len(H)
  
     # Real frequency axis in cyc/oct: index m of H corresponds to
-    # m/L * channels_per_oct/2 (same derivation as R1 inside gen_corf, just
-    # without dividing out fc).
+    # m/L * channels_per_oct/2 (same derivation as octave_offsets inside gen_corf,
+    # just without dividing by tune_scale).
     freqs = np.arange(L) / L * channels_per_oct / 2
  
     if ax is None:
