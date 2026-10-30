@@ -14,10 +14,14 @@ The plotting helpers additionally require matplotlib, and the MATLAB reference s
 ### Important to note
  - When filter coefficients were exported from MATLAB as a CSV and loaded in directly, they resulted in filters with significant numerical instability, even when using `sosfilt`. They were then exported in `zpk` format and this seemed to fix the problem, but the reason for this is unclear.
  - The behavior of other filters beyond those produced by the work of Shamma et al has not been tested. While it is possible to load in different filters, the function may not behave as expected. Information on how to use custom filters is available in the documentation and corresponding tutorial (see below).
- - The correctness of the functions was tested against the MATLAB implementation, and numerically corresponds to the MATLAB output with an absolute tolerance of 0.01.
+ - The correctness of the functions was tested against the MATLAB implementation, and numerically corresponds to the MATLAB output with a relative tolerance of `1e-6 * max(|matlab output|)`. The most recent implementation matches the MATLAB NSL toolbox with a mean relative L2 error of `1.4e-8` across 32 reference cases (ie `‖py − matlab‖ / ‖matlab‖`, averaged over all test cases).
 
 ## Tutorials and documentation
 Tutorials provide narrative explanations of how functions and their parameters work, alongside sample code and corresponding output. The objective is to help the user get a quick practical grasp of how to use the toolbox. They can be found in the **tutorials** folder. For more details, documentation is also available via [ReadTheDocs](https://neural-audio.readthedocs.io/en/latest/).
 
 ### Note on AI usage
 Claude Code was used to assist this project. As a result, it a mixture of manually-written and LLM-written content. Most text descriptions, including the tutorials and docstrings, were manually written due to their technical nature. Claude Code was used to write 'first draft' code which was then manually cleaned up and optimized where possible. Any LLM output, across any domain of the project, is carefully verified for accuracy, to the best of our ability. 
+
+## Known issues
+- Custom filters not yet properly supported
+
