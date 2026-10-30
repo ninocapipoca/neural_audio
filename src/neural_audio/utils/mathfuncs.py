@@ -5,7 +5,7 @@ def sigmoid(y: np.ndarray, fac: float) -> np.ndarray:
     """
     Nonlinear sigmoid function for cochlear hair cell modelling.
 
-    A monotonic increasing function that simulates hair cell nonlinearity.
+    A monotonically increasing function that simulates hair cell nonlinearity.
     Behaviour is controlled by the ``fac`` parameter, which selects between
     several operating modes ranging from a smooth transistor-like response
     to a hard limiter or half-wave rectifier.
@@ -24,7 +24,7 @@ def sigmoid(y: np.ndarray, fac: float) -> np.ndarray:
     :rtype: numpy.ndarray
 
     .. seealso::
-        :func:`wav2aud`
+        :func:`~neural_audio.wav2aud.wav2aud`
 
     .. rubric:: References
 
@@ -68,12 +68,12 @@ def _gen_spectral_modulations(num_sinusoids: int=6,
     :type sf: int, optional, default=16000
 
     :returns: 1D signal of shape (duration*sf,); for example, if your sampling frequency is 16kHz and you have a duration of
-        2 seconds, your output signal will have length 32kHz.
+        2 seconds, your output signal will have 32000 samples.
     :rtype: numpy.ndarray
 
     .. warning:: If you plan on using this signal with ``wav2aud`` make sure that the maximum and minimum frequencies are
-        within the calibrated range. For the default ``wav2aud`` parameters (octave shift 0, sampling rate 16kHz) the range is 180-7040Hz. 
-        For non-default parameters, you may need to adjust ``f_min`` and ``f_max`` accordingly. See ``wav2aud`` documentation or 
+        within the calibrated range. For the default ``wav2aud`` parameters (octave shift 0, sampling rate 16kHz) the range is 180-7040Hz.
+        For non-default parameters, you may need to adjust ``f_min`` and ``f_max`` accordingly. See ``wav2aud`` documentation or
         the corresponding tutorial for more information on these adjustments.
     """
     t = np.arange(0, duration, 1/sf) 
@@ -95,20 +95,23 @@ def gen_ripple(rate: float,
 
     :math:`S(t, x) = 1 + \sin (2\pi(wt + \Omega x))`
 
-    where x is position along the log-frequency axis in octaves relative to `f_min`,
+    where x is position along the log-frequency axis in octaves relative to ``f_min``,
     w (rate) is the ripple velocity in Hz, and Omega (scale) is the ripple density
     in cycles/octave.
 
-    The signal is made up of many pure sinusoids, log-spaced in frequency between `f_min` and `f_max`,
+    The signal is made up of many pure sinusoids, log-spaced in frequency between ``f_min`` and ``f_max``,
     which are each amplitude-modulated by S(t, x) evaluated at their own octave position x, then summed.
     Here, S(t,x) is referred to as the ripple function, which is not the same as the signal
-    itself; it only describes how the signal changes across time and frequency.
+    itself; it only describes how the signal changes across time and frequency. The carrier phases
+    are random but drawn from a fixed seed, so the output is reproducible.
 
     :param rate: Ripple velocity (w), in Hz. Controls how quickly the stimulus modulations happen in time.
-        Sign controls sweep direction ("up"/"down").
+        Sign controls sweep direction: for a positive ``scale``, a positive ``rate`` makes the ripple
+        move down in frequency and a negative ``rate`` makes it move up.
     :type rate: float
 
-    :param scale: Ripple density (Omega), in cycles/octave. Controls how frequency modulations in the stimulus occur.
+    :param scale: Ripple density (Omega), in cycles/octave. Controls how closely the ripple peaks are
+        spaced along the log-frequency axis.
     :type scale: float
 
     :param duration: Duration of the signal, in seconds.
@@ -131,7 +134,7 @@ def gen_ripple(rate: float,
     .. [1] Chi, Taishih & Ru, Powen & Shamma, Shihab (2005),
         "Multiresolution spectrotemporal analysis of complex sounds",
         The Journal of the Acoustical Society of America, 118, 887-906,
-        10.1121/1.1945807
+        https://doi.org/10.1121/1.1945807
     """
     num_channels = 1024  # dense to avoid artefacts
     t = np.arange(0, duration, 1 / sf)
@@ -161,39 +164,39 @@ def gen_temporal_modulations_rate(rate: float, duration: float = 2, sf: int = 16
 
     A pure-tone carrier is amplitude-modulated by a sinusoidal envelope at
     ``rate`` Hz. This produces smooth temporal modulation without the step-function-like behavior of short bursts 
-    as in ``gen_temporal_bursts_rate``. To avoid artefacts, smoothing can be applied setting ``ramp = True`` and tuned
+    as in ``gen_temporal_bursts_rate``. To avoid artefacts, smoothing can be applied by setting ``ramp=True`` and tuned
     using ``ramp_frac``.
 
     :param rate: Temporal modulation rate in Hz.
     :type rate: float
 
     :param duration: Signal duration in seconds.
-    :type duration: float, optional
+    :type duration: float, optional, default=2
 
     :param sf: Sampling frequency in Hz.
-    :type sf: int, optional
+    :type sf: int, optional, default=16000
 
     :param carrier_freq: Carrier tone frequency in Hz. Should fall within the
         range the cochlear filterbank covers (roughly 180-7040 Hz at the
-        default sampling rate). Default is 1kHz.
-    :type carrier_freq: float, optional
+        default sampling rate).
+    :type carrier_freq: float, optional, default=1000
 
     :param depth: Modulation depth in [0, 1]. At 1.0 the envelope reaches zero
         at its troughs (100% modulation); at 0.0 the carrier is unmodulated.
-    :type depth: float, optional
+    :type depth: float, optional, default=1.0
 
     :param ramp: Whether to use a Hann window to reduce edge artefacts. Note that
-        this adds some slow spectral modulation, so this is `False` by default.
-    :type ramp: bool, optional
+        this adds some slow spectral modulation, so this is ``False`` by default.
+    :type ramp: bool, optional, default=False
 
     :param ramp_frac: Fraction of total length to taper (use as a ramp) at each end
-        of the original signal. A small value is recommended (0.05 by default), and the maximum possible value is
+        of the original signal. A small value is recommended, and the maximum possible value is
         0.5, which applies the Hann window to the entire signal.
-    :type ramp_frac: float, optional
+    :type ramp_frac: float, optional, default=0.05
 
-    :param clip: Whether to clip the carrier frequency if it falls outside the approximate default filterbank range. True by
-        default, but can be toggled to allow compatibility with other filterbanks.
-    :type clip: bool, optional
+    :param clip: Whether to clip the carrier frequency to 180-7040 Hz if it falls outside that approximate default
+        filterbank range. Can be turned off to allow compatibility with other filterbanks.
+    :type clip: bool, optional, default=True
 
     :returns: Tuple ``(signal, envelope)`` of 1-D arrays of length ``int(duration * sf)``: the modulated
         signal and the amplitude envelope applied to the carrier.
@@ -253,14 +256,14 @@ def gen_temporal_bursts_rate(rate: float, duration: float = 2, sf: int = 16000,
     :type rate: float
 
     :param duration: Signal duration in seconds.
-    :type duration: float, optional
+    :type duration: float, optional, default=2
 
     :param sf: Sampling frequency in Hz.
-    :type sf: int, optional
+    :type sf: int, optional, default=16000
 
     :param burst_length: Length of each burst, in samples. Must be at least 1 and no longer than
-        the spacing between bursts (``sf / rate`` samples). Default is 1 (a single-sample impulse).
-    :type burst_length: int, optional
+        the spacing between bursts (``sf / rate`` samples). The default of 1 gives a single-sample impulse.
+    :type burst_length: int, optional, default=1
 
     :returns: 1-D signal of length ``duration * sf``.
     :rtype: numpy.ndarray
@@ -322,7 +325,7 @@ def gen_spectral_modulations_scale(scale: float, f_min: int = 180, f_max: int = 
     :type sf: int, optional, default=16000
 
     :returns: 1D signal of shape (duration*sf,); for example, if your sampling frequency is 16kHz and you have a duration of
-        2 seconds, your output signal will have length 32kHz.
+        2 seconds, your output signal will have 32000 samples.
     :rtype: numpy.ndarray
 
     .. warning:: If you plan on using this signal with ``wav2aud`` make sure that the maximum and minimum frequencies are

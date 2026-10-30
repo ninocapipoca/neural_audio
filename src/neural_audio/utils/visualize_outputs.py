@@ -183,7 +183,7 @@ def plot_cr_projection(cr: np.ndarray, rates: np.ndarray, scales: np.ndarray | N
                        axes: Sequence[Axes] | None = None,
                        signed_rates: bool = False) -> tuple[Figure, tuple[Axes, Axes, Axes]]:
     """
-    Plots 2D projections (scale-rate, scale-frequency, rate-frequency) of a cortical representation produced by `aud2cor`, with time averaged out.
+    Plots 2D projections (scale-rate, scale-frequency, rate-frequency) of a cortical representation produced by ``aud2cor``, with time averaged out.
 
     :param cr: 4-D cortical output, shape (num_scales, num_rates*2, num_time, num_freq).
         num_time and num_freq may include zero/wrap-around margins added by aud2cor's
@@ -304,7 +304,7 @@ def plot_cr_temporal(cr: np.ndarray, rates: np.ndarray, scales: np.ndarray | Non
                      figsize: tuple[float, float] = (10, 4),
                      axes: Sequence[Axes] | None = None,
                      signed_rates: bool = False) -> tuple[Figure, tuple[Axes, Axes]]:
-    """Plots time-resolved projections (rate-time, scale-time) of a cortical representation produced by `aud2cor`.
+    """Plots time-resolved projections (rate-time, scale-time) of a cortical representation produced by ``aud2cor``.
 
     Rather than collapsing the time axis as in :func:`plot_cr_projection`, this function instead keeps time on the x-axis
     and collapses the two axes that are not being examined, producing two time-resolved views:
@@ -332,8 +332,9 @@ def plot_cr_temporal(cr: np.ndarray, rates: np.ndarray, scales: np.ndarray | Non
     :type scales: numpy.ndarray, optional
     :param time_points: Time values (in seconds) for the *unpadded* time frames, e.g. the
         ``time_points`` returned by ``wav2aud``. Used for real x-tick labels; when shorter
-        than ``cr``'s time axis (because ``temporal_margin > 0`` was used) the labels are offset
-        into the real-data region. If ``None``, the axis shows the frame index.
+        than ``cr``'s time axis (because ``temporal_margin > 0`` was used) only the real frames
+        at the start are labeled, and the margin frames that ``aud2cor`` appends after them are
+        left unlabeled. If ``None``, the axis shows the frame index.
     :type time_points: numpy.ndarray, optional
     :param figsize: Figure size, used only when a new figure is created (``axes=None``).
     :type figsize: tuple of float, optional, default=(10, 4)
@@ -401,16 +402,16 @@ def plot_cr_temporal(cr: np.ndarray, rates: np.ndarray, scales: np.ndarray | Non
 
     ax_rate, ax_scale = axes
 
-    # Time ticks (x-axis on all panels), offset into the real-data region if margins exist
+    # Time ticks (x-axis on all panels). aud2cor appends any temporal margin after the
+    # real data, so the real frames start at index 0 and need no offset.
     if time_points is not None:
-        dN = (n_time_actual - len(time_points)) // 2
-        if dN < 0:
+        if len(time_points) > n_time_actual:
             raise ValueError(
                 f"len(time_points) ({len(time_points)}) exceeds cr's time dimension "
                 f"({n_time_actual}); time_points must correspond to the unpadded time axis."
             )
         t_idx = np.linspace(0, len(time_points) - 1, 6).astype(int)
-        t_ticks = t_idx + dN
+        t_ticks = t_idx
         t_labels = [f"{time_points[i]:.2f}" for i in t_idx]
         for ax in axes:
             ax.set_xticks(t_ticks)
