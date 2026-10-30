@@ -21,3 +21,7 @@ Tutorials provide narrative explanations of how functions and their parameters w
 
 ### Note on AI usage
 Claude Code was used to assist this project. As a result, it a mixture of manually-written and LLM-written content. Most text descriptions, including the tutorials and docstrings, were manually written due to their technical nature. Claude Code was used to write 'first draft' code which was then manually cleaned up and optimized where possible. Any LLM output, across any domain of the project, is carefully verified for accuracy, to the best of our ability. 
+
+## Known issues
+- Custom filters not yet properly supported
+
