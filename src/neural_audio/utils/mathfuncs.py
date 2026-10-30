@@ -240,8 +240,7 @@ def gen_temporal_modulations_rate(rate: float, duration: float = 2, sf: int = 16
 def gen_temporal_bursts_rate(rate: float, duration: float = 2, sf: int = 16000,
                              burst_length: int = 1) -> np.ndarray:
     """
-    Generates a signal containing bursts at a specified
-    modulation rate.
+    Generates a signal containing bursts at a specified modulation rate.
 
     The signal consists of evenly spaced broadband bursts, one every ``1/rate`` seconds starting
     at t = 0. Every acoustic frequency is present, while the temporal
