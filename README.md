@@ -2,6 +2,8 @@
 
 This toolbox is an implementation of an auditory model of the cochlea as developed by Shamma et al, first developed in MATLAB by Powen Ru and colleagues (Neural Systems Laboratory, University of Maryland). Their original documentation, containing the theoretical basis of the implementation, can be found [here](http://nsl.isr.umd.edu/Files/auditory.pdf). 
 
+This work was funded by the Dutch Research Council (NWO Grant 406.20.GO.030) and the European Research Council through ERC-2024-SyG NASCE (grant agreement 101167313).
+
 ## Installation
 This package is available on [PyPI](https://pypi.org/project/neural-audio/) and can be installed using `pip install neural-audio`
 
@@ -24,4 +26,7 @@ Claude Code was used to assist this project. As a result, it a mixture of manual
 
 ## Known issues
 - Custom filters not yet properly supported
+
+
+
 
