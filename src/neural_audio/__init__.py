@@ -13,6 +13,6 @@ from neural_audio.wav2aud import wav2aud
 try:
     __version__ = _version("neural_audio")
 except PackageNotFoundError:  # running from a source tree without an install
-    __version__ = "0.1.2"
+    __version__ = "0.2.0"
 
 __all__ = ["wav2aud", "aud2cor", "gen_cort", "gen_corf", "__version__"]

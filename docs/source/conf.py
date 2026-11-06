@@ -22,7 +22,7 @@ author = 'C L Nina Matos'
 try:
     release = _version('neural_audio')
 except PackageNotFoundError:
-    release = '0.1.2'
+    release = '0.2.0'
 
 
 # -- General configuration ---------------------------------------------------
