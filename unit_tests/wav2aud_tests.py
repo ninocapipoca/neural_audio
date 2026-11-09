@@ -80,3 +80,13 @@ class stepTest(unittest.TestCase):
         _, _, py_out = wav2aud(step_input)
 
         np.testing.assert_allclose(py_out, matlab_out, atol=abs_tol * np.abs(matlab_out).max())
+
+class parallelTests(unittest.TestCase):
+    # parallel=True must give the same audiogram as the serial path, also for the non-default nonlinearity and leaky integration
+    @parameterized.expand([("threads", 2), ("threads", 5), ("processes", 2), ("processes", 5)])
+    def test_parallel_matches_serial(self, backend, n_jobs):
+        wave = sin_cases[3][0]
+        _, _, serial_out = wav2aud(wave, sigmoid_factor=1, time_constant=8)
+        _, _, parallel_out = wav2aud(wave, sigmoid_factor=1, time_constant=8, parallel=True, n_jobs=n_jobs, backend=backend)
+
+        np.testing.assert_allclose(parallel_out, serial_out, rtol=1e-12, atol=0)
