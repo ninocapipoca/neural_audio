@@ -10,9 +10,6 @@ import os
 
 logger = logging.getLogger(__name__)
 
-# Number of output channels processed per _wav2aud_step call in the serial path (bounds memory use)
-_SERIAL_BLOCK = 32
-
 def wav2aud(x: np.ndarray,
             octave_shift: int=0,
             frame_length: int=4,
@@ -193,9 +190,7 @@ def wav2aud(x: np.ndarray,
 
     # --- Compute audiogram: N frames x (M-1) channels ---
     if not parallel:
-        # Regular wav2aud: process the channels block by block on the current core
-        audiogram = np.concatenate([_wav2aud_step(x, sos_list[lo:min(lo + _SERIAL_BLOCK, M-1) + 1], **params)
-                                    for lo in range(0, M-1, _SERIAL_BLOCK)], axis=1)
+        audiogram = _wav2aud_step(x, sos_list, **params)
     else:
         audiogram = _wav2aud_parallel(x, sos_list, params, n_jobs=n_jobs, backend=backend, chunk_size=chunk_size, verbose=verbose)
 
@@ -261,36 +256,44 @@ def _wav2aud_step(x: np.ndarray,
 
     :returns: The audiogram block of shape ``[N, K]``.
     """
-    # y1 Spatiotemporal displacements along the basilar membrane, one row per filter.
-    # sosfilt only accepts one filter per call, so this loop over filters is unavoidable.
-    y = np.stack([sig.sosfilt(sos, x) for sos in sos_block])
+    K = len(sos_block) - 1
+    audiogram = np.zeros((N, K))
+    sos_y2 = sig.tf2sos(np.array([1.]), np.array([1, -beta]))
+    sos_y5 = sig.tf2sos(np.array([1.]), np.array([1, -alph])) if alph else None
 
-    # y2 Transduction of ``y1`` into hair cell potentials (or instantaneous auditory nerve firing rate)
-    y = mf.sigmoid(y, sigmoid_factor)
+    # High -> low frequency. Working one channel at a time keeps only a few signal-length arrays in memory.
+    y2_h = None
+    for ch in range(K, -1, -1):
+        y1 = sig.sosfilt(sos_block[ch], x) # y1 Spatiotemporal displacements along the basilar membrane
+        y2 = mf.sigmoid(y1, sigmoid_factor) # y2 Transduction of ``y1`` into hair cell potentials (or instantaneous auditory nerve firing rate)
 
-    # Hair cell membrane low-pass filter (cutoff <= 4 kHz), applied to all channels at once.
-    # Skipped when sigmoid_factor == -2 (linear ionic channel mode).
-    if sigmoid_factor != -2:
-        y = sig.sosfilt(sig.tf2sos(np.array([1.]), np.array([1, -beta])), y, axis=-1)
+        # Hair cell membrane low-pass filter (cutoff <= 4 kHz).
+        # Skipped when sigmoid_factor == -2 (linear ionic channel mode).
+        if sigmoid_factor != -2:
+            y2 = sig.sosfilt(sos_y2, y2)
 
-    # y3 Lateral inhibitory network: subtract the next higher channel from each channel
-    y = y[:-1] - y[1:]
+        # The highest filter of the block is only the reference for lateral inhibition in the channel below it
+        if ch == K:
+            y2_h = y2
+            continue
 
-    # y4 Half-wave rectification, modelling the threshold non-linearity in the lateral inhibition network
-    np.maximum(y, 0, out=y)
+        # Lateral inhibitory network
+        y3   = y2 - y2_h # y3 Models lateral inhibitory interactions among LIN neurons
+        y2_h = y2
+        y4   = np.maximum(y3, 0) # y4 Half-wave rectified ``y3``, modelling threshold non-linearity in the lateral inhibition network
 
-    # Temporal integration
-    if alph:
-        # Leaky integration
-        y = sig.sosfilt(sig.tf2sos(np.array([1.]), np.array([1, -alph])), y, axis=-1)
-        out = sig.decimate(y, L_frm, axis=-1)
-    elif L_frm == 1:
-        out = y
-    else:
-        # Short-term average over each frame
-        out = y.reshape(y.shape[0], N, L_frm).mean(axis=-1)
+        # Temporal integration. Assigning into ``audiogram`` copies the values, so the signal-length arrays can be freed.
+        if alph:
+            # Leaky integration
+            y5 = sig.sosfilt(sos_y5, y4)
+            audiogram[:, ch] = sig.decimate(y5, L_frm)
+        elif L_frm == 1:
+            audiogram[:, ch] = y4
+        else:
+            # Short-term average over each frame
+            audiogram[:, ch] = y4.reshape(N, L_frm).mean(axis=1)
 
-    return out.T
+    return audiogram
 
 
 def _wav2aud_parallel(x: np.ndarray,
